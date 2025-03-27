@@ -1,0 +1,31 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Lexer e parser
+      id: lexer-e-parser
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Lexer e parser
+        setup-command: ''
+        command: java -cp "chocopy-ref.jar:target/assignment.jar" chocopy.ChocoPy
+          --pass=s --test --dir src/test/data/pa1/sample/
+        timeout: 10
+        max-score: 10
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        LEXER-E-PARSER_RESULTS: "${{steps.lexer-e-parser.outputs.result}}"
+      with:
+        runners: lexer-e-parser
