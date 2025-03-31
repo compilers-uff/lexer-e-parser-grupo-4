@@ -144,7 +144,8 @@ action code {:
  */
 terminal NEWLINE;
 terminal String PLUS; 
-terminal Integer NUMBER; 
+terminal Integer NUMBER;
+terminal String IDENTIFIER;
 /* Returned by the lexer for erroneous tokens.  Since it does not appear in
  * the grammar, it indicates a syntax error. */
 terminal UNRECOGNIZED;   
