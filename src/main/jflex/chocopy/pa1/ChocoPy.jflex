@@ -78,6 +78,9 @@ IntegerLiteral = 0 | [1-9][0-9]*
 
   /* Whitespace. */
   {WhiteSpace}                { /* ignore */ }
+
+  /* Apóstrofo Simples */
+  \'                          { /* ignore */ }
 }
 
 <<EOF>>                       { return symbol(ChocoPyTokens.EOF); }

@@ -199,6 +199,9 @@ stmt_list ::= stmt:s                 {: RESULT = single(s); :}
 stmt ::= expr_stmt:s NEWLINE {: RESULT = s; :}
               ;
 
+stmt ::= IDENTIFIER:id '=' expr:e NEWLINE {: RESULT = new AssignStmt(idxleft, exright, single(new Identifier(idxleft, idxright, id)), e); :}
+              ;
+
 expr_stmt ::= expr:e    {: RESULT = new ExprStmt(exleft, exright, e); :}
             ;
 
