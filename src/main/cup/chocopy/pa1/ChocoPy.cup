@@ -171,6 +171,8 @@ non terminal List<Stmt>        stmt_list, opt_stmt_list;
 non terminal Stmt              stmt, expr_stmt;
 
 /* Declaração - Nonterminals */
+non terminal List<Declaration> decl_list;
+non terminal Declaration       decl;
 non terminal VarDef            var_def;
 
 /* Type - Nonterminals */
@@ -202,11 +204,18 @@ program ::= program_head:d opt_stmt_list:s
         ;
 
 /* Programa */
-program_head ::= /* not implemented; currently matches empty string */
-                                     {: RESULT = empty(); :}
-                ;
+program_head ::= /* empty */ {: RESULT = empty(); :}
+               | program_head:l NEWLINE {: RESULT = l; :}
+               | program_head:l decl:d {: RESULT = combine(l, d); :}
+               ;
 
 /* Declarações */
+decl_list ::= /* empty */ {: RESULT = empty(); :}
+                             | decl_list:l decl:d {: RESULT = combine(l, d); :}
+            ;
+
+decl ::= var_def:d {: RESULT = d; :}
+       ;
 
 opt_stmt_list ::=                    {: RESULT = empty(); :}
                 | stmt_list:s        {: RESULT = s; :}
@@ -242,6 +251,7 @@ cexpr ::= cexpr_t:e {: RESULT = e; :}
         ;
 
 cexpr_t ::= identifier:i {: RESULT = i; :}
+          | literal:l    {: RESULT = l; :}
           ;
 
 /* Identificador */
