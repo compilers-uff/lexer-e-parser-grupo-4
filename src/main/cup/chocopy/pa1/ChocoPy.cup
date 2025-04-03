@@ -178,6 +178,7 @@ non terminal VarDef            var_def;
 /* Type - Nonterminals */
 non terminal TypedVar          typed_var;
 non terminal TypeAnnotation    type;
+non terminal ClassType         class_type;
 
 /* Expressão - Nonterminals */
 non terminal Expr              cexpr, expr;
@@ -267,6 +268,13 @@ var_def ::= typed_var:t EQ:op literal:l NEWLINE {: RESULT = new VarDef(txleft, l
             ;
 
 typed_var ::= identifier:i COLON:c type:t {: RESULT = new TypedVar(ixleft, txright, i, t); :}
+            ;
+
+/* Tipos */
+type ::= class_type:c {: RESULT = c; :}
+      ;
+
+class_type ::= IDENTIFIER:id {: RESULT = new ClassType(idxleft, idxright, id); :}
             ;
 
 /* A binary expression, illustrating how to find the left and right

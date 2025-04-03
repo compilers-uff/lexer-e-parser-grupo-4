@@ -67,7 +67,7 @@ IntegerLiteral = 0 | [1-9][0-9]*
   {LineBreak}                 { return symbol(ChocoPyTokens.NEWLINE); }
 
   /* Literals. */
-  {IntegerLiteral}            { return symbol(ChocoPyTokens.NUMBER,
+  {IntegerLiteral}            { return symbol(ChocoPyTokens.INTEGER,
                                                  Integer.parseInt(yytext())); }
 
  /* Identifiers. */
