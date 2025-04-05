@@ -71,6 +71,10 @@ IntegerLiteral = 0 | [1-9][0-9]*
 
   /* Operators. */
   "+"                         { return symbol(ChocoPyTokens.PLUS, yytext()); }
+  "-"                         { return symbol(ChocoPyTokens.MINUS, yytext()); }
+  "*"                         { return symbol(ChocoPyTokens.TIMES, yytext()); }
+  "%"                         { return symbol(ChocoPyTokens.MOD, yytext()); }
+  "//"                         { return symbol(ChocoPyTokens.DOUBLESLASH, yytext()); }
 
   /* Whitespace. */
   {WhiteSpace}                { /* ignore */ }

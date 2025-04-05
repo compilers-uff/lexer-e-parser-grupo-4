@@ -1,0 +1,69 @@
+{
+  "declarations" : [ ],
+  "statements" : [ {
+    "expr" : {
+      "kind" : "BinaryExpr",
+      "location" : [ 1, 1, 1, 22 ],
+      "left" : {
+        "kind" : "BinaryExpr",
+        "location" : [ 1, 1, 1, 5 ],
+        "left" : {
+          "value" : 1,
+          "kind" : "IntegerLiteral",
+          "location" : [ 1, 1, 1, 1 ]
+        },
+        "operator" : "+",
+        "right" : {
+          "value" : 2,
+          "kind" : "IntegerLiteral",
+          "location" : [ 1, 5, 1, 5 ]
+        }
+      },
+      "operator" : "-",
+      "right" : {
+        "kind" : "BinaryExpr",
+        "location" : [ 1, 9, 1, 22 ],
+        "left" : {
+          "kind" : "BinaryExpr",
+          "location" : [ 1, 9, 1, 18 ],
+          "left" : {
+            "kind" : "BinaryExpr",
+            "location" : [ 1, 9, 1, 13 ],
+            "left" : {
+              "value" : 3,
+              "kind" : "IntegerLiteral",
+              "location" : [ 1, 9, 1, 9 ]
+            },
+            "operator" : "*",
+            "right" : {
+              "value" : 4,
+              "kind" : "IntegerLiteral",
+              "location" : [ 1, 13, 1, 13 ]
+            }
+          },
+          "operator" : "//",
+          "right" : {
+            "value" : 5,
+            "kind" : "IntegerLiteral",
+            "location" : [ 1, 18, 1, 18 ]
+          }
+        },
+        "operator" : "%",
+        "right" : {
+          "value" : 6,
+          "kind" : "IntegerLiteral",
+          "location" : [ 1, 22, 1, 22 ]
+        }
+      }
+    },
+    "kind" : "ExprStmt",
+    "location" : [ 1, 1, 1, 22 ]
+  } ],
+  "errors" : {
+    "errors" : [ ],
+    "kind" : "Errors",
+    "location" : [ 0, 0, 0, 0 ]
+  },
+  "kind" : "Program",
+  "location" : [ 1, 1, 1, 23 ]
+}
