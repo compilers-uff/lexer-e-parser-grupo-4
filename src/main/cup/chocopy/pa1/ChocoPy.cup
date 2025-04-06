@@ -233,19 +233,18 @@ stmt_list ::= stmt:s                 {: RESULT = single(s); :}
              * input symbols until it is possible to shift again, reporting
              * a syntax error. */
             ;
-
-stmt ::= expr_stmt:s NEWLINE {: RESULT = s; :}
-              ;
+            
 
 stmt ::= IDENTIFIER:id '=' expr:e NEWLINE {: RESULT = new AssignStmt(idxleft, exright, single(new Identifier(idxleft, idxright, id)), e); :}
-            | binary_expr:e  {: RESULT = e; :}
-              ;
+        | expr_stmt:s NEWLINE {: RESULT = s; :}
+        ;
 
 expr_stmt ::= expr:e    {: RESULT = new ExprStmt(exleft, exright, e); :}
             ;
 
 /* Expressões */
 expr ::= expr_t:e {: RESULT = e; :}
+        | binary_expr:e  {: RESULT = e; :}
        ;
 
 expr_t ::= cexpr:e {: RESULT = e; :}
