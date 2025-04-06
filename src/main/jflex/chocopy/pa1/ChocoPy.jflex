@@ -58,6 +58,8 @@ LineBreak  = \r|\n|\r\n
 Identifier = [a-zA-Z_][a-zA-Z0-9_]*
 IntegerLiteral = 0 | [1-9][0-9]*
 
+Identifier = [a-zA-Z_][a-zA-Z0-9_]*
+
 %%
 
 
@@ -77,6 +79,10 @@ IntegerLiteral = 0 | [1-9][0-9]*
   "+"                         { return symbol(ChocoPyTokens.PLUS, yytext()); }
   "="                         { return symbol(ChocoPyTokens.EQ); }
   ":"                         { return symbol(ChocoPyTokens.COLON); }
+  "-"                         { return symbol(ChocoPyTokens.MINUS, yytext()); }
+  "*"                         { return symbol(ChocoPyTokens.TIMES, yytext()); }
+  "%"                         { return symbol(ChocoPyTokens.MOD, yytext()); }
+  "//"                        { return symbol(ChocoPyTokens.DOUBLESLASH, yytext()); }
 
   /* Whitespace. */
   {WhiteSpace}                { /* ignore */ }

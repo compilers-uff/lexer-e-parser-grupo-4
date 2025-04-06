@@ -143,13 +143,14 @@ action code {:
  * in actions ( {: ... :} ).
  */
 terminal NEWLINE;
-terminal String PLUS;
-terminal Integer NUMBER;
-
-/* Operadores */
+terminal String PLUS; 
+terminal String MINUS; 
+terminal String TIMES; 
+terminal String MOD;
+terminal String DOUBLESLASH;  
+terminal Integer NUMBER; 
 terminal String EQ;
 terminal String COLON;
-
 /* Returned by the lexer for erroneous tokens.  Since it does not appear in
  * the grammar, it indicates a syntax error. */
 terminal UNRECOGNIZED;
@@ -181,7 +182,7 @@ non terminal TypeAnnotation    type;
 non terminal ClassType         class_type;
 
 /* Expressão - Nonterminals */
-non terminal Expr              cexpr, expr;
+non terminal Expr              cexpr, expr, binary_expr;
 non terminal Expr              cexpr_t, expr_t;
 
 /* Outros Nonterminals */
@@ -190,7 +191,8 @@ non terminal Identifier        identifier;
 
 /* Precedences (lowest to highest) for resolving what would otherwise be
  * ambiguities in the form of shift/reduce conflicts.. */
-precedence left PLUS;
+precedence left PLUS, MINUS;
+precedence left TIMES, MOD, DOUBLESLASH;
 
 /* The start symbol. */
 start with program;
@@ -236,6 +238,7 @@ stmt ::= expr_stmt:s NEWLINE {: RESULT = s; :}
               ;
 
 stmt ::= IDENTIFIER:id '=' expr:e NEWLINE {: RESULT = new AssignStmt(idxleft, exright, single(new Identifier(idxleft, idxright, id)), e); :}
+            | binary_expr:e  {: RESULT = e; :}
               ;
 
 expr_stmt ::= expr:e    {: RESULT = new ExprStmt(exleft, exright, e); :}
@@ -280,6 +283,18 @@ class_type ::= IDENTIFIER:id {: RESULT = new ClassType(idxleft, idxright, id); :
 /* A binary expression, illustrating how to find the left and right
  * source position of a phrase. */
 binary_expr ::= expr:e1 PLUS:op expr:e2
+                        {: RESULT = new BinaryExpr(e1xleft, e2xright,
+                                                   e1, op, e2); :}
+                | expr:e1 MINUS:op expr:e2
+                        {: RESULT = new BinaryExpr(e1xleft, e2xright,
+                                                   e1, op, e2); :}
+                | expr:e1 TIMES:op expr:e2
+                        {: RESULT = new BinaryExpr(e1xleft, e2xright,
+                                                   e1, op, e2); :}
+                | expr:e1 MOD:op expr:e2
+                        {: RESULT = new BinaryExpr(e1xleft, e2xright,
+                                                   e1, op, e2); :}
+                | expr:e1 DOUBLESLASH:op expr:e2
                         {: RESULT = new BinaryExpr(e1xleft, e2xright,
                                                    e1, op, e2); :}
               ;
