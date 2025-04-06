@@ -160,6 +160,8 @@ terminal Integer INTEGER;
 /* Identifier Token */
 terminal String IDENTIFIER;
 
+terminal String DEF, RETURN, ARROW, LPAREN, RPAREN, COMMA;
+
 /* Nonterminal symbols (defined in production rules below).
  * As for terminal symbols,
  *     non terminal <type> <identifier1>, ..., <identifiern>;
@@ -168,11 +170,11 @@ terminal String IDENTIFIER;
 non terminal Program           program;
 non terminal List<Declaration> program_head;
 non terminal List<Stmt>        stmt_list, opt_stmt_list;
-non terminal Stmt              stmt, expr_stmt;
+non terminal Stmt              stmt, expr_stmt, return_stmt, stmt_block;
 
 /* Declaração - Nonterminals */
 non terminal List<Declaration> decl_list;
-non terminal Declaration       decl;
+non terminal Declaration       decl, func_def;
 non terminal VarDef            var_def;
 
 /* Type - Nonterminals */
@@ -187,6 +189,10 @@ non terminal Expr              cexpr_t, expr_t;
 /* Outros Nonterminals */
 non terminal Literal           literal;
 non terminal Identifier        identifier;
+
+non terminal List<Parameter> parameters;
+non terminal Parameter parameter;
+
 
 /* Precedences (lowest to highest) for resolving what would otherwise be
  * ambiguities in the form of shift/reduce conflicts.. */
@@ -216,6 +222,7 @@ decl_list ::= /* empty */ {: RESULT = empty(); :}
             ;
 
 decl ::= var_def:d {: RESULT = d; :}
+       | func_def:f {: RESULT = f; :}
        ;
 
 opt_stmt_list ::=                    {: RESULT = empty(); :}
@@ -233,13 +240,30 @@ stmt_list ::= stmt:s                 {: RESULT = single(s); :}
             ;
 
 stmt ::= expr_stmt:s NEWLINE {: RESULT = s; :}
-              ;
+       | IDENTIFIER:id '=' expr:e NEWLINE {: RESULT = new AssignStmt(idxleft, exright, single(new Identifier(idxleft, idxright, id)), e); :}
+       | return_stmt:s NEWLINE {: RESULT = s; :}
+       ;
 
-stmt ::= IDENTIFIER:id '=' expr:e NEWLINE {: RESULT = new AssignStmt(idxleft, exright, single(new Identifier(idxleft, idxright, id)), e); :}
-              ;
+stmt_block ::= stmt_list NEWLINE
+        ;
 
 expr_stmt ::= expr:e    {: RESULT = new ExprStmt(exleft, exright, e); :}
             ;
+
+func_def ::= DEF IDENTIFIER:id LPAREN parameters:ps RPAREN ARROW type:t COLON NEWLINE decl_list:ds stmt_block:ss
+           {: RESULT = new FuncDef(idxleft, sxright, id, ps, t, ds, ss); :}
+           ;
+
+parameters ::= /* vazio */ {: RESULT = empty(); :}
+            | parameter:p {: RESULT = single(p); :}
+            | parameters:ps COMMA parameter:p {: RESULT = combine(ps, p); :}
+            ;
+
+parameter ::= identifier:i COLON type:t {: RESULT = new Parameter(ixleft, txright, i, t); :}
+             ;
+
+return_stmt ::= RETURN expr:e {: RESULT = new ReturnStmt(rxleft, exright, e); :}
+             ;
 
 /* Expressões */
 expr ::= expr_t:e {: RESULT = e; :}

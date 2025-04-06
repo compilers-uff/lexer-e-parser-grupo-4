@@ -83,6 +83,14 @@ IntegerLiteral = 0 | [1-9][0-9]*
 
   /* Apóstrofo Simples */
   \'                          { /* ignore */ }
+
+  "def"        { return symbol(ChocoPyTokens.DEF); }
+  "return"     { return symbol(ChocoPyTokens.RETURN); }
+  "->"         { return symbol(ChocoPyTokens.ARROW); }
+  "("          { return symbol(ChocoPyTokens.LPAREN); }
+  ")"          { return symbol(ChocoPyTokens.RPAREN); }
+  ","          { return symbol(ChocoPyTokens.COMMA); }
+
 }
 
 <<EOF>>                       { return symbol(ChocoPyTokens.EOF); }
