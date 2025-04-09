@@ -13,19 +13,41 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    - name: Lexer e parser
-      id: lexer-e-parser
+    - name: class_attr
+      id: class_attr
       uses: classroom-resources/autograding-command-grader@v1
       with:
-        test-name: Lexer e parser
-        setup-command: ''
-        command: mvn package ; java -cp "chocopy-ref.jar:target/assignment.jar" chocopy.ChocoPy
-          --pass=s --test --dir src/test/data/pa1/sample/
+        test-name: class_attr
+        setup-command: mvn package
+        command: ' java -cp "chocopy-ref.jar:target/assignment.jar" chocopy.ChocoPy
+          --pass=s --test --dir src/test/data/pa1/sample/class_attr.py'
         timeout: 10
-        max-score: 10
+        max-score: 1
+    - name: class_attr_get
+      id: class_attr_get
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: class_attr_get
+        setup-command: ''
+        command: ' java -cp "chocopy-ref.jar:target/assignment.jar" chocopy.ChocoPy
+          --pass=s --test --dir src/test/data/pa1/sample/class_attr_get.py'
+        timeout: 10
+        max-score: 1
+    - name: expr_plus
+      id: expr_plus
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: expr_plus
+        setup-command: ''
+        command: ' java -cp "chocopy-ref.jar:target/assignment.jar" chocopy.ChocoPy
+          --pass=s --test --dir src/test/data/pa1/sample/expr_plus.py'
+        timeout: 10
+        max-score: 1
     - name: Autograding Reporter
       uses: classroom-resources/autograding-grading-reporter@v1
       env:
-        LEXER-E-PARSER_RESULTS: "${{steps.lexer-e-parser.outputs.result}}"
+        CLASS_ATTR_RESULTS: "${{steps.class_attr.outputs.result}}"
+        CLASS_ATTR_GET_RESULTS: "${{steps.class_attr_get.outputs.result}}"
+        EXPR_PLUS_RESULTS: "${{steps.expr_plus.outputs.result}}"
       with:
-        runners: lexer-e-parser
+        runners: class_attr,class_attr_get,expr_plus
