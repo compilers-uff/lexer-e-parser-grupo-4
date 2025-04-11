@@ -143,8 +143,24 @@ action code {:
  * in actions ( {: ... :} ).
  */
 terminal NEWLINE;
-terminal String PLUS; 
-terminal Integer NUMBER; 
+
+/* IDENTIFIER */
+terminal String IDENTIFIER;
+
+/* ARITHMETICS */
+terminal String PLUS, MINUS, TIMES, MOD, DOUBLESLASH, UMINUS; 
+
+/* COMPARISON */
+terminal String BIGGERTHAN, LESSTHAN, LESSTHANEQUAL, BIGGERTHANEQUAL, EQ, DIFF, IS;
+
+/* STRUCTS */
+terminal String ASSIGN, COLON, DOT, LBRACKET, RBRACKET, LPAREN, RPAREN, ARROW, COMMA;
+
+/* LOGICAL */
+terminal String AND, OR, NOT;
+
+
+terminal Integer INTEGER; 
 /* Returned by the lexer for erroneous tokens.  Since it does not appear in
  * the grammar, it indicates a syntax error. */
 terminal UNRECOGNIZED;   
@@ -162,7 +178,15 @@ non terminal Expr              expr, binary_expr;
 
 /* Precedences (lowest to highest) for resolving what would otherwise be
  * ambiguities in the form of shift/reduce conflicts.. */
-precedence left PLUS;
+precedence left OR;
+precedence left AND;
+precedence nonassoc NOT; /* -----N/A------ */
+precedence nonassoc EQ, DIFF, LESSTHAN, BIGGERTHAN, LESSTHANEQUAL, BIGGERTHANEQUAL, IS; /*----none----*/ 
+precedence left PLUS, MINUS;
+precedence left TIMES, DOUBLESLASH, MOD;
+precedence nonassoc UMINUS; /* ------N/A------ */
+precedence left DOT; /* falta os [] */
+
 
 /* The start symbol. */
 start with program;
@@ -202,7 +226,7 @@ expr_stmt ::= expr:e    {: RESULT = new ExprStmt(exleft, exright, e); :}
             ;
 
 expr ::= binary_expr:e  {: RESULT = e; :}
-       | NUMBER:n       {: RESULT = new IntegerLiteral(nxleft, nxright, n); :}
+       | INTEGER:n       {: RESULT = new IntegerLiteral(nxleft, nxright, n); :}
        ;
 
 
