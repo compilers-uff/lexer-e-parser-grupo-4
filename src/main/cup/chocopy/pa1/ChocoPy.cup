@@ -173,7 +173,10 @@ action code {:
  */
 
 /* Declaração de Terminais */
-terminal NEWLINE, RETURN, DEF;
+terminal NEWLINE;
+terminal PASS, RETURN;
+terminal DEF;
+terminal CLASS;
 terminal INDENT, DEDENT;
 terminal Integer INTEGER;
 terminal String IDENTIFIER;
@@ -198,13 +201,14 @@ terminal UNRECOGNIZED;
 
 /* Declaração de não terminais principais */
 non terminal Program           program;
-non terminal List<Declaration> program_head, opt_declare_list;
+non terminal List<Declaration> program_head, opt_declare_list, class_body;
 non terminal List<Stmt>        stmt_list, opt_stmt_list;
 non terminal List<Expr>        expr_list, assign_targets;
-non terminal List<TypedVar>    typedvar_list;
+non terminal List<TypedVar>    typed_var_list;
 
 /* Declaração de não terminais relacionados a declarações e tipos */
 non terminal FuncDef           func_def;
+non terminal ClassDef          class_def;
 non terminal TypeAnnotation    type;
 non terminal Declaration       declare;
 non terminal TypedVar          typed_var;
@@ -269,6 +273,7 @@ program ::= program_head:d opt_stmt_list:s
 
 /* Initial list of declarations. */
 program_head ::= {: RESULT = empty(); :}
+               | program_head:h class_def:cd {: RESULT = combine(h,cd); :}
                | program_head:h func_def:fd  {: RESULT = combine(h,fd); :}
                | program_head:h var_def:vd   {: RESULT = combine(h,vd); :}
                ;
@@ -281,9 +286,20 @@ declare ::= func_def:fd {: RESULT = fd; :}
           | var_def:vd  {: RESULT = vd; :}
           ;
 
-func_def ::= DEF:d identifier:id LPAREN typedvar_list:tl RPAREN ARROW type:ta
+class_def ::= CLASS:c identifier:id LPAREN identifier:id2 RPAREN COLON NEWLINE INDENT PASS NEWLINE:nl DEDENT:d
+                {: RESULT = new ClassDef(cxleft,nlxright,id,id2, empty()); :}
+            | CLASS:c identifier:id LPAREN identifier:id2 RPAREN COLON NEWLINE
+                          INDENT class_body:cb DEDENT:d
+                          {: RESULT = new ClassDef(cxleft,cbxright,id,id2,cb); :}
+            ;
+
+class_body ::= func_def:fd {: RESULT = single(fd); :}
+           | var_def:vd  {: RESULT = single(vd); :}
+           ;
+
+func_def ::= DEF:d identifier:id LPAREN typed_var_list:tvl RPAREN ARROW type:ta
              COLON NEWLINE INDENT opt_declare_list:dl stmt_list:sl DEDENT:de
-             {: RESULT = new FuncDef(dxleft,getRight(sl),id,tl,ta,dl,sl); :}
+             {: RESULT = new FuncDef(dxleft,getRight(sl),id,tvl,ta,dl,sl); :}
            ;
 
 var_def ::= typed_var:tv EQ literal:l NEWLINE
@@ -301,8 +317,8 @@ identifier ::= IDENTIFIER:id
 type  ::= IDENTIFIER:id {: RESULT = new ClassType(idxleft,idxright,id); :}
         ;
 
-typedvar_list ::= typed_var:t                       {: RESULT = single(t); :}
-                | typedvar_list:l COMMA typed_var:t {: RESULT = combine(l,t); :}
+typed_var_list ::= typed_var:t                       {: RESULT = single(t); :}
+                | typed_var_list:l COMMA typed_var:t {: RESULT = combine(l,t); :}
                 |                                  {: RESULT = empty(); :}
                 ;
 

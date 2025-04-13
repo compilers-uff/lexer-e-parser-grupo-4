@@ -90,7 +90,9 @@ Comment = "#".*
                               }
 
   /* Palavras Chave */
+  "class"                     { return symbol(ChocoPyTokens.CLASS); }
   "def"                       { return symbol(ChocoPyTokens.DEF); }
+  "pass"                      { return symbol(ChocoPyTokens.PASS); }
   "return"                    { return symbol(ChocoPyTokens.RETURN); }
 
   /* Literals. */
