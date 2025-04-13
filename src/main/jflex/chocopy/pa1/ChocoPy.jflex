@@ -112,6 +112,8 @@ Comment = "#".*
   "%"                         { return symbol(ChocoPyTokens.MOD, yytext()); }
   "("                         { return symbol(ChocoPyTokens.LPAREN, yytext()); }
   ")"                         { return symbol(ChocoPyTokens.RPAREN, yytext()); }
+  "["                         { return symbol(ChocoPyTokens.LINDEX, yytext()); }
+  "]"                         { return symbol(ChocoPyTokens.RINDEX, yytext()); }
   ","                         { return symbol(ChocoPyTokens.COMMA , yytext()); }
   "->"                        { return symbol(ChocoPyTokens.ARROW , yytext()); }
 

@@ -187,6 +187,7 @@ terminal String PLUS, MINUS;
 terminal String MOD;
 terminal String EQ;
 terminal String LPAREN, RPAREN;
+terminal String LINDEX, RINDEX;
 terminal String COMMA, COLON;
 terminal String ARROW;
 
@@ -288,9 +289,8 @@ declare ::= func_def:fd {: RESULT = fd; :}
           ;
 
 class_def ::= CLASS:c identifier:id LPAREN identifier:id2 RPAREN COLON NEWLINE INDENT PASS NEWLINE:nl DEDENT:d
-                {: RESULT = new ClassDef(cxleft,nlxright,id,id2, empty()); :}
-            | CLASS:c identifier:id LPAREN identifier:id2 RPAREN COLON NEWLINE
-                          INDENT class_body:cb DEDENT:d
+                          {: RESULT = new ClassDef(cxleft,nlxright,id,id2, empty()); :}
+            | CLASS:c identifier:id LPAREN identifier:id2 RPAREN COLON NEWLINE INDENT class_body:cb DEDENT:d
                           {: RESULT = new ClassDef(cxleft,cbxright,id,id2,cb); :}
             ;
 
@@ -298,29 +298,27 @@ class_body ::= func_def:fd {: RESULT = single(fd); :}
            | var_def:vd  {: RESULT = single(vd); :}
            ;
 
-func_def ::= DEF:d identifier:id LPAREN typed_var_list:tvl RPAREN ARROW type:ta
-             COLON NEWLINE INDENT opt_declare_list:dl stmt_list:sl DEDENT:de
-             {: RESULT = new FuncDef(dxleft,getRight(sl),id,tvl,ta,dl,sl); :}
-           ;
+func_def ::= DEF:d identifier:id LPAREN typed_var_list:tvl RPAREN ARROW type:t COLON NEWLINE INDENT opt_declare_list:dl stmt_list:sl DEDENT:de
+                                  {: RESULT = new FuncDef(dxleft,getRight(sl),id,tvl,t,dl,sl); :}
+          ;
 
 var_def ::= typed_var:tv EQ literal:l NEWLINE
                 {: RESULT = new VarDef(tvxleft,lxright,tv,l); :}
           ;
 
-typed_var ::= identifier:id COLON type:t
-                 {: RESULT = new TypedVar(idxleft,txright,id,t); :}
+typed_var ::= identifier:id COLON type:t {: RESULT = new TypedVar(idxleft,txright,id,t); :}
            ;
 
-identifier ::= IDENTIFIER:id
-                 {: RESULT = new Identifier(idxleft,idxright,id); :}
-             ;
+identifier ::= IDENTIFIER:id {: RESULT = new Identifier(idxleft,idxright,id); :}
+            ;
 
-type  ::= IDENTIFIER:id {: RESULT = new ClassType(idxleft,idxright,id); :}
-        ;
+type ::= IDENTIFIER:id              {: RESULT = new ClassType(idxleft,idxright,id); :}
+      | LINDEX:ld type:t RINDEX:rd  {: RESULT = new ListType(ldxleft,rdxright,t); :}
+      ;
 
-typed_var_list ::= typed_var:t                       {: RESULT = single(t); :}
-                | typed_var_list:l COMMA typed_var:t {: RESULT = combine(l,t); :}
-                |                                  {: RESULT = empty(); :}
+typed_var_list ::= typed_var:t                        {: RESULT = single(t); :}
+                | typed_var_list:l COMMA typed_var:t  {: RESULT = combine(l,t); :}
+                |                                     {: RESULT = empty(); :}
                 ;
 
 opt_stmt_list ::=                    {: RESULT = empty(); :}
