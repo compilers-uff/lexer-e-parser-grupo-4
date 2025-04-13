@@ -18,8 +18,8 @@ jobs:
       uses: classroom-resources/autograding-io-grader@v1
       with:
         test-name: expr_test
-        setup-command: mvn package
-        command: java -cp "chocopy-ref.jar:target/assignment.jar" chocopy.ChocoPy
+        setup-command: ''
+        command: mvn package ; java -cp "chocopy-ref.jar:target/assignment.jar" chocopy.ChocoPy
           --pass=s --test --dir src/test/data/pa1/sample/expr_plus.py
         input: ''
         expected-output: 'Tests: 1 passed, 0 failed, and 0 ignored.'
