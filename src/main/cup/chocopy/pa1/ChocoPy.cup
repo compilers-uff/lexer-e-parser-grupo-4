@@ -174,6 +174,7 @@ action code {:
 
 /* Declaração de Terminais */
 terminal NEWLINE;
+terminal boolean TRUE, FALSE;
 terminal PASS, RETURN;
 terminal DEF;
 terminal CLASS;
@@ -371,7 +372,8 @@ pexpr ::= binary_expr:e        {: RESULT = e; :}
         ;
 
 
-literal ::= INTEGER:n {: RESULT = new IntegerLiteral(nxleft, nxright, n); :}
+literal ::= TRUE:l  {: RESULT = new BooleanLiteral(lxleft, lxright, l); :}
+          | INTEGER:n {: RESULT = new IntegerLiteral(nxleft, nxright, n); :}
           ;
 
 /* A binary expression, illustrating how to find the left and right

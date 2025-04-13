@@ -94,6 +94,8 @@ Comment = "#".*
   "def"                       { return symbol(ChocoPyTokens.DEF); }
   "pass"                      { return symbol(ChocoPyTokens.PASS); }
   "return"                    { return symbol(ChocoPyTokens.RETURN); }
+  "True"                      { return symbol(ChocoPyTokens.TRUE, true); }
+  "False"                     { return symbol(ChocoPyTokens.FALSE, false); }
 
   /* Literals. */
   {IntegerLiteral}            { return symbol(ChocoPyTokens.INTEGER,
