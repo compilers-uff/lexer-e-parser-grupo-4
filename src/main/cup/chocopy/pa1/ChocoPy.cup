@@ -15,6 +15,9 @@ parser code {:
      *  node produced as a result. */
     public final Errors errors = new Errors(new ArrayList<>());
 
+    // For generating compile error token
+    private ComplexSymbolFactory symbolFactory = new ComplexSymbolFactory();
+
     /** Return the Program node that results from parsing the stream of
      *  tokens produced by lexical analysis.  In the case of syntax errors,
      *  the program may be empty, but will have error messages. */
@@ -45,12 +48,29 @@ parser code {:
 
     @Override
     public void syntax_error(Symbol cur_token) {
-                String token = symbl_name_from_id(cur_token.sym);
-                String text = ((ChocoPyLexer) getScanner()).yytext();
-                errors.syntaxError(
-                    ((ComplexSymbolFactory.ComplexSymbol) cur_token).xleft,
-                    ((ComplexSymbolFactory.ComplexSymbol) cur_token).xright,
-                    "Parse error near token %s: %s", token, text);
+        // Método chamado automaticamente quando ocorre um erro de sintaxe.
+        // Recebe o token atual que causou o erro e registra uma mensagem detalhada
+        // com o nome do token, seu valor e sua localização no código-fonte.
+        String token = symbl_name_from_id(cur_token.sym);
+        String text = cur_token.value.toString();
+        errors.syntaxError(
+            ((ComplexSymbolFactory.ComplexSymbol) cur_token).xleft,
+            ((ComplexSymbolFactory.ComplexSymbol) cur_token).xright,
+            "Parse error near token %s: %s", token, text);
+    }
+
+    public void syntax_error(Symbol cur_token, String reasons) {
+        // Sobrecarga do método de erro de sintaxe que permite incluir uma razão adicional.
+        // Além de registrar o token problemático, adiciona a razão fornecida à mensagem de erro.
+        String token = symbl_name_from_id(cur_token.sym);
+        String text = cur_token.value.toString();
+        if(reasons != null){
+          text = text + '\n' + reasons;
+        }
+        errors.syntaxError(
+            ((ComplexSymbolFactory.ComplexSymbol) cur_token).xleft,
+            ((ComplexSymbolFactory.ComplexSymbol) cur_token).xright,
+            "Parse error near token %s: %s", token, text);
     }
 
     @Override
@@ -61,9 +81,9 @@ parser code {:
 
 
 /**************************************************************************
- *              FEEL FREE TO MODIFY ANYTHING BELOW THIS LINE              
+ *              FEEL FREE TO MODIFY ANYTHING BELOW THIS LINE
  *
- * The rules provided below parse expressions of the form <INT> + <INT> + ... 
+ * The rules provided below parse expressions of the form <INT> + <INT> + ...
  * You can re-use these rules or edit them as you wish. The start rule
  * should return a node of type Program.
  *
@@ -131,6 +151,15 @@ action code {:
                                                  first.getLocation()[1]);
     }
 
+    ComplexSymbolFactory.Location getRight(List<? extends Node> nodes) {
+        if (nodes.isEmpty()) {
+            return null;
+        }
+        Node last = nodes.get(nodes.size()-1);
+        return new ComplexSymbolFactory.Location(last.getLocation()[2],
+                                                 last.getLocation()[3]);
+    }
+
 :}
 
 /* Terminal symbols (tokens returned by the lexer).  The declaration
@@ -142,50 +171,72 @@ action code {:
  * semantic value of type <type> for these symbols that may be referenced
  * in actions ( {: ... :} ).
  */
-terminal NEWLINE;
 
-/* IDENTIFIER */
+/* Declaração de Terminais */
+terminal NEWLINE, RETURN, DEF;
+terminal INDENT, DEDENT;
+terminal Integer INTEGER;
 terminal String IDENTIFIER;
+terminal String ASSIGN;
 
-/* ARITHMETICS */
-terminal String PLUS, MINUS, TIMES, MOD, DOUBLESLASH, UMINUS; 
+/* Declaração de terminais operadores */
+terminal String PLUS, MINUS, TIMES, DIV;
+terminal String MOD;
+terminal String EQ, LEQ, GEQ, NEQ;
+terminal String LPAREN, RPAREN, LBR, RBR;
+terminal String COMMA, COLON, DOT;
+terminal String ARROW;
+terminal Boolean FALSE, TRUE;
 
-/* COMPARISON */
-terminal String BIGGERTHAN, LESSTHAN, LESSTHANEQUAL, BIGGERTHANEQUAL, EQ, DIFF, IS;
+terminal
+    /* Logical Operators */
+    AND, OR, IS, NOT,
 
-/* STRUCTS */
-terminal String ASSIGN, COLON, DOT, LBRACKET, RBRACKET, LPAREN, RPAREN, ARROW, COMMA;
+    /* Reserved words - Keywords */
+    AS, ASSERT, ASYNC, AWAIT, BREAK, CLASS, CONTINUE, DEL, ELIF, ELSE,
+    EXCEPT, FINALLY, FOR, FROM, GLOBAL, IF, IMPORT, IN, LAMBDA, NONLOCAL,
+    PASS, RAISE, TRY, WHILE, WITH, YIELD, NONE;
 
-/* LOGICAL */
-terminal String AND, OR, NOT;
-
-
-terminal Integer INTEGER; 
 /* Returned by the lexer for erroneous tokens.  Since it does not appear in
  * the grammar, it indicates a syntax error. */
-terminal UNRECOGNIZED;   
+terminal UNRECOGNIZED;
 
 /* Nonterminal symbols (defined in production rules below).
- * As for terminal symbols, 
- *     non terminal <type> <identifier1>, ..., <identifiern>; 
+ * As for terminal symbols,
+ *     non terminal <type> <identifier1>, ..., <identifiern>;
  * defines the listed nonterminal identifier symbols to have semantic values
  * of type <type>. */
+
+/* Declaração de não terminais principais */
 non terminal Program           program;
-non terminal List<Declaration> program_head;
+non terminal List<Declaration> program_head, opt_declare_list, class_body;
 non terminal List<Stmt>        stmt_list, opt_stmt_list;
-non terminal Stmt              stmt, expr_stmt;
-non terminal Expr              expr, binary_expr;
+non terminal List<Expr>        expr_list, assign_targets;
+non terminal List<TypedVar>    typedvar_list;
+
+/* Declaração de não terminais relacionados a declarações e tipos */
+non terminal FuncDef           func_def;
+non terminal TypeAnnotation    type;
+non terminal Declaration       declare;
+non terminal TypedVar          typed_var;
+non terminal VarDef            var_def;
+non terminal ClassDef          class_def;
+
+/* Declaração de não terminais relacionados a expressões e literais */
+non terminal Stmt              stmt, expr_stmt, assign_stmt, simple_stmt;
+non terminal Expr              expr, binary_expr, pexpr, cexpr;
+non terminal Literal           literal;
+non terminal Identifier        identifier;
 
 /* Precedences (lowest to highest) for resolving what would otherwise be
  * ambiguities in the form of shift/reduce conflicts.. */
+precedence left PLUS, MINUS;
+precedence left MOD;
+
 precedence left OR;
 precedence left AND;
-precedence nonassoc NOT; /* -----N/A------ */
-precedence nonassoc EQ, DIFF, LESSTHAN, BIGGERTHAN, LESSTHANEQUAL, BIGGERTHANEQUAL, IS; /*----none----*/ 
-precedence left PLUS, MINUS;
-precedence left TIMES, DOUBLESLASH, MOD;
-precedence nonassoc UMINUS; /* ------N/A------ */
-precedence left DOT; /* falta os [] */
+precedence right NOT;
+precedence nonassoc IS;
 
 
 /* The start symbol. */
@@ -195,14 +246,93 @@ start with program;
 /*****  GRAMMAR RULES *****/
 
 program ::= program_head:d opt_stmt_list:s
-        {: RESULT = new Program(d.isEmpty() ? getLeft(s) : getLeft(d),
-                                sxright, d, s, errors);
-        :}
+        {:
+
+            // It is illegal for a return statement to occur at the top level
+            // outside a function or method body.
+            List<Stmt> stmts = s;
+            if(s != null && s.size() > 0){
+
+              stmts = new ArrayList<Stmt>();
+              for(Stmt stmt : s){
+                if(stmt instanceof ReturnStmt){
+
+                  int[] location = stmt.getLocation();
+                  /*
+                  Location stmtxleft = new ComplexSymbolFactory.Location(location[0], location[1]);
+                  Location stmtxright = new ComplexSymbolFactory.Location(location[2], location[3]);
+                  CompilerError error = new CompilerError(stmtxleft, stmtxright,
+                    "It is illegal for a return statement to occur at the top level outside a function or method body.",
+                    true);
+                  errors.add(error);
+                  */
+
+                  int type = ChocoPyTokens.RETURN;
+                  Symbol returnSym = symbolFactory.newSymbol(ChocoPyTokens.terminalNames[type], type,
+                                       new ComplexSymbolFactory.Location(location[0], location[1]),
+                                       new ComplexSymbolFactory.Location(location[0], location[1] + 5), "return");
+                  syntax_error(returnSym, "It is illegal for a return statement to occur at the top level outside a function or method body.");
+
+                }else{
+                  stmts.add(stmt);
+                }
+              }
+
+            }
+
+            RESULT = new Program(d.isEmpty() ? getLeft(s) : getLeft(d),
+                                sxright, d, stmts, errors);
+         :}
         ;
 
 /* Initial list of declarations. */
-program_head ::= /* not implemented; currently matches empty string */
-                                     {: RESULT = empty(); :}
+program_head ::= {: RESULT = empty(); :}
+               | program_head:h class_def:cd {: RESULT = combine(h,cd); :}
+               | program_head:h func_def:fd  {: RESULT = combine(h,fd); :}
+               | program_head:h var_def:vd   {: RESULT = combine(h,vd); :}
+               ;
+
+opt_declare_list ::= opt_declare_list:l declare:d {: RESULT = combine(l,d); :}
+                   | {: RESULT = empty(); :}
+                   ;
+
+declare ::= func_def:fd {: RESULT = fd; :}
+          | var_def:vd  {: RESULT = vd; :}
+          ;
+
+class_def ::= CLASS:c identifier:id LPAREN identifier:id2 RPAREN COLON NEWLINE INDENT PASS NEWLINE:nl DEDENT:d
+                          {: RESULT = new ClassDef(cxleft,nlxright,id,id2, empty()); :}
+            | CLASS:c identifier:id LPAREN identifier:id2 RPAREN COLON NEWLINE INDENT class_body:cb DEDENT:d
+                          {: RESULT = new ClassDef(cxleft,cbxright,id,id2,cb); :}
+            ;
+
+class_body ::= func_def:fd {: RESULT = single(fd); :}
+           | var_def:vd  {: RESULT = single(vd); :}
+           ;
+
+func_def ::= DEF:d identifier:id LPAREN typedvar_list:tl RPAREN ARROW type:ta
+             COLON NEWLINE INDENT opt_declare_list:dl stmt_list:sl DEDENT:de
+             {: RESULT = new FuncDef(dxleft,getRight(sl),id,tl,ta,dl,sl); :}
+           ;
+
+var_def ::= typed_var:tv ASSIGN literal:l NEWLINE
+                {: RESULT = new VarDef(tvxleft,lxright,tv,l); :}
+          ;
+
+typed_var ::= identifier:id COLON type:t
+                 {: RESULT = new TypedVar(idxleft,txright,id,t); :}
+           ;
+
+identifier ::= IDENTIFIER:id
+                 {: RESULT = new Identifier(idxleft,idxright,id); :}
+             ;
+
+type  ::= IDENTIFIER:id {: RESULT = new ClassType(idxleft,idxright,id); :}
+        ;
+
+typedvar_list ::= typed_var:t                       {: RESULT = single(t); :}
+                | typedvar_list:l COMMA typed_var:t {: RESULT = combine(l,t); :}
+                |                                  {: RESULT = empty(); :}
                 ;
 
 opt_stmt_list ::=                    {: RESULT = empty(); :}
@@ -211,28 +341,61 @@ opt_stmt_list ::=                    {: RESULT = empty(); :}
 
 stmt_list ::= stmt:s                 {: RESULT = single(s); :}
             | stmt_list:l stmt:s     {: RESULT = combine(l, s); :}
-            | stmt_list:l error      {: RESULT = l; :}
-            /* If there is a syntax error in the source, this says to discard
-             * symbols from the parsing stack and perform reductions until
-             * there is a stmt_list on top of the stack, and then to discard
-             * input symbols until it is possible to shift again, reporting
-             * a syntax error. */
             ;
 
-stmt ::= expr_stmt:s NEWLINE {: RESULT = s; :}
-              ;
-
-expr_stmt ::= expr:e    {: RESULT = new ExprStmt(exleft, exright, e); :}
-            ;
-
-expr ::= binary_expr:e  {: RESULT = e; :}
-       | INTEGER:n       {: RESULT = new IntegerLiteral(nxleft, nxright, n); :}
+stmt ::= simple_stmt:s NEWLINE {: RESULT = s; :}
        ;
 
+simple_stmt ::= expr_stmt:e     {: RESULT = e; :}
+              | assign_stmt:s   {: RESULT = s; :}
+              | RETURN:r expr:e {: RESULT = new ReturnStmt(rxleft,exright,e); :}
+              | RETURN:r {: RESULT = new ReturnStmt(rxleft,rxright,null); :}
+              ;
+
+expr_stmt ::= expr:e {: RESULT = new ExprStmt(exleft, exright, e); :}
+            ;
+
+assign_stmt ::= assign_targets:l ASSIGN expr:e
+                    {: RESULT = new AssignStmt(lxleft,exright,l,e); :}
+              ;
+
+assign_targets ::= identifier:id  {: RESULT = single(id); :}
+                 | assign_targets:at ASSIGN identifier:id
+                                  {: RESULT = combine(at,id); :}
+                 ;
+
+expr_list ::= expr:e                     {: RESULT = single(e); :}
+            | expr_list:l COMMA expr:e   {: RESULT = combine(l,e); :}
+            |                            {: RESULT = empty(); :}
+            ;
+
+expr ::= cexpr:e        {: RESULT = e; :}
+       ;
+
+cexpr ::= pexpr:e {: RESULT = e; :}
+        ;
+
+pexpr ::= binary_expr:e        {: RESULT = e; :}
+        | literal:l            {: RESULT = l; :}
+        | LPAREN expr:e RPAREN {: RESULT = e; :}
+        | identifier:id        {: RESULT = id; :}
+        | identifier:id LPAREN:lp expr_list:l RPAREN:rp
+              {: RESULT = new CallExpr(idxleft, rpxright, id, l); :}
+        ;
+
+
+literal ::= INTEGER:n        {: RESULT = new IntegerLiteral(nxleft, nxright, n); :}
+          | TRUE:t           {: RESULT = new BooleanLiteral(txleft, txright, true); :}
+          | FALSE:f          {: RESULT = new BooleanLiteral(fxleft, fxright, false); :}
+          | NONE:n          {: RESULT = new NoneLiteral(nxleft, nxright); :}
+          ;
 
 /* A binary expression, illustrating how to find the left and right
  * source position of a phrase. */
-binary_expr ::= expr:e1 PLUS:op expr:e2
-                        {: RESULT = new BinaryExpr(e1xleft, e2xright,
-                                                   e1, op, e2); :}
+binary_expr ::= pexpr:e1 PLUS:op pexpr:e2
+                    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 MINUS:op pexpr:e2
+                    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 MOD:op pexpr:e2
+                    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
               ;
