@@ -90,12 +90,13 @@ Comment = "#".*
                               }
 
   /* Palavras Chave */
-  "class"                     { return symbol(ChocoPyTokens.CLASS); }
-  "def"                       { return symbol(ChocoPyTokens.DEF); }
-  "pass"                      { return symbol(ChocoPyTokens.PASS); }
-  "return"                    { return symbol(ChocoPyTokens.RETURN); }
-  "True"                      { return symbol(ChocoPyTokens.TRUE, true); }
   "False"                     { return symbol(ChocoPyTokens.FALSE, false); }
+  "True"                      { return symbol(ChocoPyTokens.TRUE, true); }
+  "return"                    { return symbol(ChocoPyTokens.RETURN); }
+  "class"                     { return symbol(ChocoPyTokens.CLASS); }
+  "while"                     { return symbol(ChocoPyTokens.WHILE); }
+  "pass"                      { return symbol(ChocoPyTokens.PASS); }
+  "def"                       { return symbol(ChocoPyTokens.DEF); }
 
   /* Literals. */
   {IntegerLiteral}            { return symbol(ChocoPyTokens.INTEGER,
@@ -110,20 +111,26 @@ Comment = "#".*
   ":"                         { return symbol(ChocoPyTokens.COLON); }
   "-"                         { return symbol(ChocoPyTokens.MINUS, yytext()); }
   "%"                         { return symbol(ChocoPyTokens.MOD, yytext()); }
+  "<="                        { return symbol(ChocoPyTokens.LE    , yytext()); }
   "("                         { return symbol(ChocoPyTokens.LPAREN, yytext()); }
   ")"                         { return symbol(ChocoPyTokens.RPAREN, yytext()); }
   "["                         { return symbol(ChocoPyTokens.LINDEX, yytext()); }
   "]"                         { return symbol(ChocoPyTokens.RINDEX, yytext()); }
   ","                         { return symbol(ChocoPyTokens.COMMA , yytext()); }
+  "."                         { return symbol(ChocoPyTokens.DOT   , yytext()); }
   "->"                        { return symbol(ChocoPyTokens.ARROW , yytext()); }
 
   /* Whitespace. */
-  {WhiteSpace}                { ws++;
-                                if(yyline==0 && yycolumn==0 ) {
-                                    yypushback(yylength());
-                                    yybegin(INDENTSTATE);
-                                }
-                              }
+  {WhiteSpace} {
+      ws++;
+      if (yyline == 0 && yycolumn == 0) {
+          yypushback(yylength());
+          yybegin(INDENTSTATE);
+      }
+  }
+
+  /* Comment. */
+  {Comment} { /* ignore */ }
 
   /* Apóstrofo Simples */
   \'                          { /* ignore */ }

@@ -178,17 +178,19 @@ terminal boolean TRUE, FALSE;
 terminal PASS, RETURN;
 terminal DEF;
 terminal CLASS;
+terminal WHILE;
 terminal INDENT, DEDENT;
+
 terminal Integer INTEGER;
 terminal String IDENTIFIER;
 
 /* Declaração de terminais operadores */
 terminal String PLUS, MINUS;
 terminal String MOD;
-terminal String EQ;
+terminal String EQ, LE;
 terminal String LPAREN, RPAREN;
 terminal String LINDEX, RINDEX;
-terminal String COMMA, COLON;
+terminal String COMMA, COLON, DOT;
 terminal String ARROW;
 
 /* Returned by the lexer for erroneous tokens.  Since it does not appear in
@@ -204,7 +206,7 @@ terminal UNRECOGNIZED;
 /* Declaração de não terminais principais */
 non terminal Program           program;
 non terminal List<Declaration> program_head, opt_declare_list, class_body;
-non terminal List<Stmt>        stmt_list, opt_stmt_list;
+non terminal List<Stmt>        stmt_list, opt_stmt_list, block;
 non terminal List<Expr>        expr_list, assign_targets;
 non terminal List<TypedVar>    typed_var_list;
 
@@ -226,6 +228,7 @@ non terminal Identifier        identifier;
  * ambiguities in the form of shift/reduce conflicts.. */
 precedence left PLUS, MINUS;
 precedence left MOD;
+precedence left DOT;
 
 /* The start symbol. */
 start with program;
@@ -302,8 +305,7 @@ func_def ::= DEF:d identifier:id LPAREN typed_var_list:tvl RPAREN ARROW type:t C
                                   {: RESULT = new FuncDef(dxleft,getRight(sl),id,tvl,t,dl,sl); :}
           ;
 
-var_def ::= typed_var:tv EQ literal:l NEWLINE
-                {: RESULT = new VarDef(tvxleft,lxright,tv,l); :}
+var_def ::= typed_var:tv EQ literal:l NEWLINE {: RESULT = new VarDef(tvxleft,lxright,tv,l); :}
           ;
 
 typed_var ::= identifier:id COLON type:t {: RESULT = new TypedVar(idxleft,txright,id,t); :}
@@ -334,8 +336,12 @@ stmt_list ::= stmt:s                 {: RESULT = single(s); :}
             // sem interromper o processo de parsing.
             ;
 
-stmt ::= simple_stmt:s NEWLINE {: RESULT = s; :}
-       ;
+stmt ::= simple_stmt:s NEWLINE       {: RESULT = s; :}
+      | WHILE:w expr:e COLON block:b {: RESULT = new WhileStmt(wxleft, getRight(b), e, b); :}
+      ;
+
+block ::= NEWLINE INDENT stmt_list:l DEDENT {: RESULT = l; :}
+        ;
 
 simple_stmt ::= expr_stmt:e     {: RESULT = e; :}
               | assign_stmt:s   {: RESULT = s; :}
@@ -346,14 +352,12 @@ simple_stmt ::= expr_stmt:e     {: RESULT = e; :}
 expr_stmt ::= expr:e {: RESULT = new ExprStmt(exleft, exright, e); :}
             ;
 
-assign_stmt ::= assign_targets:l EQ expr:e
-                    {: RESULT = new AssignStmt(lxleft,exright,l,e); :}
+assign_stmt ::= assign_targets:l EQ expr:e {: RESULT = new AssignStmt(lxleft,exright,l,e); :}
               ;
 
 assign_targets ::= identifier:id  {: RESULT = single(id); :}
-                 | assign_targets:at EQ identifier:id
-                                  {: RESULT = combine(at,id); :}
-                 ;
+                | assign_targets:at EQ identifier:id {: RESULT = combine(at,id); :}
+                ;
 
 expr_list ::= expr:e                     {: RESULT = single(e); :}
             | expr_list:l COMMA expr:e   {: RESULT = combine(l,e); :}
@@ -363,15 +367,15 @@ expr_list ::= expr:e                     {: RESULT = single(e); :}
 expr ::= cexpr:e        {: RESULT = e; :}
        ;
 
-cexpr ::= pexpr:e {: RESULT = e; :}
+cexpr ::= pexpr:e                 {: RESULT = e; :}
+        | cexpr:e1 LE:op pexpr:e2 {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         ;
 
-pexpr ::= binary_expr:e        {: RESULT = e; :}
-        | literal:l            {: RESULT = l; :}
-        | LPAREN expr:e RPAREN {: RESULT = e; :}
-        | identifier:id        {: RESULT = id; :}
-        | identifier:id LPAREN:lp expr_list:l RPAREN:rp
-              {: RESULT = new CallExpr(idxleft, rpxright, id, l); :}
+pexpr ::= binary_expr:e                                   {: RESULT = e; :}
+        | literal:l                                       {: RESULT = l; :}
+        | LPAREN expr:e RPAREN                            {: RESULT = e; :}
+        | identifier:id                                   {: RESULT = id; :}
+        | identifier:id LPAREN:lp expr_list:l RPAREN:rp   {: RESULT = new CallExpr(idxleft, rpxright, id, l); :}
         ;
 
 
