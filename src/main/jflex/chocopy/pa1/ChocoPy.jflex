@@ -96,7 +96,9 @@ Comment = "#".*
   "class"                     { return symbol(ChocoPyTokens.CLASS); }
   "while"                     { return symbol(ChocoPyTokens.WHILE); }
   "pass"                      { return symbol(ChocoPyTokens.PASS); }
+  "elif"                      { return symbol(ChocoPyTokens.ELIF); }
   "def"                       { return symbol(ChocoPyTokens.DEF); }
+  "if"                        { return symbol(ChocoPyTokens.IF); }
 
   /* Literals. */
   {IntegerLiteral}            { return symbol(ChocoPyTokens.INTEGER,
@@ -106,11 +108,7 @@ Comment = "#".*
  {Identifier}                { return symbol(ChocoPyTokens.IDENTIFIER, yytext()); }
 
   /* Operadores */
-  "+"                         { return symbol(ChocoPyTokens.PLUS, yytext()); }
-  "="                         { return symbol(ChocoPyTokens.EQ); }
-  ":"                         { return symbol(ChocoPyTokens.COLON); }
-  "-"                         { return symbol(ChocoPyTokens.MINUS, yytext()); }
-  "%"                         { return symbol(ChocoPyTokens.MOD, yytext()); }
+  "=="                        { return symbol(ChocoPyTokens.EQEQ  , yytext()); }
   "<="                        { return symbol(ChocoPyTokens.LE    , yytext()); }
   "("                         { return symbol(ChocoPyTokens.LPAREN, yytext()); }
   ")"                         { return symbol(ChocoPyTokens.RPAREN, yytext()); }
@@ -119,6 +117,11 @@ Comment = "#".*
   ","                         { return symbol(ChocoPyTokens.COMMA , yytext()); }
   "."                         { return symbol(ChocoPyTokens.DOT   , yytext()); }
   "->"                        { return symbol(ChocoPyTokens.ARROW , yytext()); }
+  "-"                         { return symbol(ChocoPyTokens.MINUS, yytext()); }
+  "+"                         { return symbol(ChocoPyTokens.PLUS, yytext()); }
+  "%"                         { return symbol(ChocoPyTokens.MOD, yytext()); }
+  ":"                         { return symbol(ChocoPyTokens.COLON); }
+  "="                         { return symbol(ChocoPyTokens.EQ); }
 
   /* Whitespace. */
   {WhiteSpace} {

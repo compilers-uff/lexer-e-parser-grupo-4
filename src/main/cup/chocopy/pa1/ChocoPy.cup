@@ -178,7 +178,7 @@ terminal boolean TRUE, FALSE;
 terminal PASS, RETURN;
 terminal DEF;
 terminal CLASS;
-terminal WHILE;
+terminal IF, ELIF, WHILE;
 terminal INDENT, DEDENT;
 
 terminal Integer INTEGER;
@@ -187,7 +187,7 @@ terminal String IDENTIFIER;
 /* Declaração de terminais operadores */
 terminal String PLUS, MINUS;
 terminal String MOD;
-terminal String EQ, LE;
+terminal String EQ, EQEQ, LE;
 terminal String LPAREN, RPAREN;
 terminal String LINDEX, RINDEX;
 terminal String COMMA, COLON, DOT;
@@ -206,7 +206,7 @@ terminal UNRECOGNIZED;
 /* Declaração de não terminais principais */
 non terminal Program           program;
 non terminal List<Declaration> program_head, opt_declare_list, class_body;
-non terminal List<Stmt>        stmt_list, opt_stmt_list, block;
+non terminal List<Stmt>        stmt_list, opt_stmt_list, block, opt_elif_list;
 non terminal List<Expr>        expr_list, assign_targets;
 non terminal List<TypedVar>    typed_var_list;
 
@@ -227,6 +227,8 @@ non terminal Identifier        identifier;
 /* Precedences (lowest to highest) for resolving what would otherwise be
  * ambiguities in the form of shift/reduce conflicts.. */
 precedence left PLUS, MINUS;
+precedence nonassoc LE, EQEQ;
+precedence right IF, ELIF;
 precedence left MOD;
 precedence left DOT;
 
@@ -336,9 +338,16 @@ stmt_list ::= stmt:s                 {: RESULT = single(s); :}
             // sem interromper o processo de parsing.
             ;
 
-stmt ::= simple_stmt:s NEWLINE       {: RESULT = s; :}
-      | WHILE:w expr:e COLON block:b {: RESULT = new WhileStmt(wxleft, getRight(b), e, b); :}
+stmt ::= simple_stmt:s NEWLINE                      {: RESULT = s; :}
+      | WHILE:w expr:e COLON block:b                {: RESULT = new WhileStmt(wxleft, getRight(b), e, b); :}
+      | IF:op expr:e COLON block:b opt_elif_list:l  {: RESULT = new IfStmt(opxleft, getRight(b), e, b, l); :}
       ;
+
+opt_elif_list ::= ELIF:op expr:e COLON block:b opt_elif_list:l
+                      {: Stmt s = new IfStmt(opxleft,getRight(l),e,b,l); RESULT =single(s); :}
+                | ELIF:op expr:e COLON block:b
+                      {: Stmt s =new IfStmt(opxleft,getRight(b),e,b,empty()); RESULT = single(s); :}
+                ;
 
 block ::= NEWLINE INDENT stmt_list:l DEDENT {: RESULT = l; :}
         ;
@@ -368,6 +377,7 @@ expr ::= cexpr:e        {: RESULT = e; :}
        ;
 
 cexpr ::= pexpr:e                 {: RESULT = e; :}
+        | cexpr:e1 EQEQ:op pexpr:e2 {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         | cexpr:e1 LE:op pexpr:e2 {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         ;
 
