@@ -125,12 +125,9 @@ Comment = "#".*
 
   <INDENTSTATE>{
     {WhiteSpace}+               {
+                                  // Calcula o nível de indentação com base nos espaços e tabulações.
+                                  // Substitui tabulações por múltiplos de 8 espaços para manter a consistência.
                                   int col = 0;
-                                  /* Indentation contains tabs */
-                                  // If a '\t' is seen, then one need to replace
-                                  // it with whitespaces such that the up until
-                                  // now whitespaces have number be a multiple of
-                                  // 8.
                                   for (int i = 0; i < yylength(); i++) {
                                       if(yycharat(i)==' '){
                                           col++;
@@ -139,23 +136,12 @@ Comment = "#".*
                                       }
                                   }
                                   if(addIndent(col)){
+                                     // Se o nível de indentação aumentou, retorna o token INDENT.
                                      yybegin(YYINITIAL);
                                      return symbol(ChocoPyTokens.INDENT);
                                   }else{
                                      if (rmIndent(col)){
-                                         // the indentation level in the current
-                                         // line ("col") should be greater than the
-                                         // indentation after DEDENT since
-                                         // otherwise "col" will be a line that has
-                                         // a invalid indentation level:
-                                         // e.g.
-                                         // for(1):
-                                         //     x = 2
-                                         //     for (2):
-                                         //         y = 3
-                                         //       z = 4 #this.indent=4; col=6;
-                                         // for such case, we should not output
-                                         // DEDENT instead of return an error.
+                                        // Se o nível de indentação diminuiu, retorna o token DEDENT.
                                          if(this.indent < col){
                                              return symbol(
                                                       ChocoPyTokens.UNRECOGNIZED,
@@ -165,6 +151,7 @@ Comment = "#".*
                                              return symbol(ChocoPyTokens.DEDENT);
                                          }
                                      } else{
+                                         // Caso contrário, retorna ao estado inicial.
                                          yybegin(YYINITIAL);
                                      }
                                   }
@@ -172,10 +159,8 @@ Comment = "#".*
     {WhiteSpace}*{LineBreak}    { /* ignore */ }
     {WhiteSpace}*{Comment}      { /* ignore */ }
     \S                          {
-                                  /* NEWLINE follows with a non-{WhiteSpace} char*/
-                                  // (1) pushback the buffer by 1
-                                  // (2) check whether there are any dendentation
-                                  //     that needs to do
+                                  // Detecta caracteres não-espaço após uma quebra de linha.
+                                  // Retorna ao estado inicial e verifica se há necessidade de retornar DEDENT.
                                   yypushback(1);
                                   if(rmIndent(0)){
                                       return symbol(ChocoPyTokens.DEDENT);
