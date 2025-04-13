@@ -327,6 +327,11 @@ opt_stmt_list ::=                    {: RESULT = empty(); :}
 
 stmt_list ::= stmt:s                 {: RESULT = single(s); :}
             | stmt_list:l stmt:s     {: RESULT = combine(l, s); :}
+            | error                  {: RESULT = empty(); :}
+            // Quando um erro de sintaxe é encontrado, esta regra captura o erro
+            // e retorna uma lista vazia. Isso permite que o parser continue
+            // analisando o restante do código, acumulando outros erros de sintaxe
+            // sem interromper o processo de parsing.
             ;
 
 stmt ::= simple_stmt:s NEWLINE {: RESULT = s; :}
