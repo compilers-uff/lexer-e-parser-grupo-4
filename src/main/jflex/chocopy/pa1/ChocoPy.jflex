@@ -141,7 +141,9 @@ String = \"([^"\\"\"] | "\\t" | "\\n" | "\\\\" | "\\\"")+\"
   "in"                        { return symbol(ChocoPyTokens.IN); }
   "is"                        { return symbol(ChocoPyTokens.IS); }
   "or"                        { return symbol(ChocoPyTokens.OR); }  
-  "and"                        { return symbol(ChocoPyTokens.AND); }
+  "and"                       { return symbol(ChocoPyTokens.AND); }
+  "global"                    { return symbol(ChocoPyTokens.GLOBAL); }
+  "nonlocal"                  { return symbol(ChocoPyTokens.NONLOCAL); }  
 
   /* Literals. */
   {IntegerLiteral}            { return symbol(ChocoPyTokens.INTEGER,
@@ -157,9 +159,9 @@ String = \"([^"\\"\"] | "\\t" | "\\n" | "\\\\" | "\\\"")+\"
   /* Operadores */
   "=="                        { return symbol(ChocoPyTokens.EQEQ  , yytext()); }
   ">"                         { return symbol(ChocoPyTokens.GT    , yytext()); }
-  ">="                         { return symbol(ChocoPyTokens.GTEQ    , yytext()); }
-  ">"                         { return symbol(ChocoPyTokens.LE    , yytext()); }
-  "<="                        { return symbol(ChocoPyTokens.LEEQ    , yytext()); }
+  ">="                         { return symbol(ChocoPyTokens.GEQ    , yytext()); }
+  "<"                         { return symbol(ChocoPyTokens.LT    , yytext()); }
+  "<="                        { return symbol(ChocoPyTokens.LEQ    , yytext()); }
   "("                         { return symbol(ChocoPyTokens.LPAREN, yytext()); }
   ")"                         { return symbol(ChocoPyTokens.RPAREN, yytext()); }
   "["                         { return symbol(ChocoPyTokens.LINDEX, yytext()); }
@@ -174,7 +176,7 @@ String = \"([^"\\"\"] | "\\t" | "\\n" | "\\\\" | "\\\"")+\"
   "*"                         { return symbol(ChocoPyTokens.TIMES, yytext()); }  
   ":"                         { return symbol(ChocoPyTokens.COLON); }
   "="                         { return symbol(ChocoPyTokens.EQ); }
-  "!="                         { return symbol(ChocoPyTokens.DIFF); }  
+  "!="                         { return symbol(ChocoPyTokens.NEQ); }  
 
   /* Whitespace. */
   {WhiteSpace} {
