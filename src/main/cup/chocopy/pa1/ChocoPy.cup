@@ -193,6 +193,7 @@ terminal String LPAREN, RPAREN;
 terminal String LINDEX, RINDEX;
 terminal String COMMA, COLON, DOT;
 terminal String ARROW;
+terminal String STRING;
 terminal String NOT;
 
 /* Returned by the lexer for erroneous tokens.  Since it does not appear in
@@ -312,6 +313,7 @@ class_body ::= func_def:fd              {: RESULT = single(fd); :}
 
 func_def ::= DEF:d identifier:id LPAREN typed_var_list:tvl RPAREN ARROW type:t COLON NEWLINE INDENT opt_declare_list:dl stmt_list:sl DEDENT:de
                                   {: RESULT = new FuncDef(dxleft,getRight(sl),id,tvl,t,dl,sl); :}
+
           ;
 
 var_def ::= typed_var:tv EQ literal:l NEWLINE {: RESULT = new VarDef(tvxleft,lxright,tv,l); :}
@@ -412,8 +414,9 @@ member_expr ::= pexpr:p DOT:op identifier:id {: RESULT = new MemberExpr(pxleft, 
 index_expr ::= pexpr:p1 LINDEX:op1 expr:p2 RINDEX:op2 {: RESULT = new IndexExpr(p1xleft, op2xright, p1, p2); :}
              ;
 
-literal ::= TRUE:l  {: RESULT = new BooleanLiteral(lxleft, lxright, l); :}
+literal ::= TRUE:l    {: RESULT = new BooleanLiteral(lxleft, lxright, l); :}
           | INTEGER:n {: RESULT = new IntegerLiteral(nxleft, nxright, n); :}
+          | STRING:s  {: RESULT = new StringLiteral(sxleft, sxright, s.substring(1,s.length()-1)); :}
           ;
 
 /* A binary expression, illustrating how to find the left and right

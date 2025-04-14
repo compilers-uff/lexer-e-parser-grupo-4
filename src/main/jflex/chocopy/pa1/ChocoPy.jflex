@@ -38,6 +38,41 @@ import java.util.Stack;
             value);
     }
 
+    private Symbol stringsymbol(int type, String s) {
+        // StringBuilder para construir a string processada.
+        StringBuilder ns = new StringBuilder();
+
+        // Itera sobre cada caractere da string de entrada.
+        for (int i = 0; i < s.length(); i++) {
+            char current = s.charAt(i);
+
+            // Verifica se o caractere atual é uma barra invertida (\) e se há um próximo caractere.
+            if (current == '\\' && i + 1 < s.length()) {
+                char next = s.charAt(i + 1);
+
+                // Trata os caracteres de escape conhecidos.
+                switch (next) {
+                    case 'n': ns.append('\n'); break;
+                    case 't': ns.append('\t'); break;
+                    case '"': ns.append('\"'); break;
+                    case '\\': ns.append('\\'); break;
+                    default: ns.append(current).append(next); break;
+                }
+                i++;
+            } else {
+                ns.append(current);
+            }
+        }
+
+        // Cria e retorna um símbolo com a string processada e informações de localização.
+        return symbolFactory.newSymbol(
+            ChocoPyTokens.terminalNames[type], type,
+            new ComplexSymbolFactory.Location(yyline + 1, yycolumn + 1),
+            new ComplexSymbolFactory.Location(yyline + 1, yycolumn + yylength()),
+            ns.toString()
+        );
+    }
+
     /* Número de espaços em branco */
     private int ws=0;
 
@@ -69,6 +104,7 @@ LineBreak  = \r|\n|\r\n
 Identifier = [a-zA-Z_][a-zA-Z0-9_]*
 IntegerLiteral = 0 | [1-9][0-9]*
 Comment = "#".*
+String = \"([^"\\"\"] | "\\t" | "\\n" | "\\\\" | "\\\"")+\"
 
 %%
 
@@ -109,6 +145,10 @@ Comment = "#".*
 
  /* Identifiers. */
  {Identifier}                { return symbol(ChocoPyTokens.IDENTIFIER, yytext()); }
+
+ /* String */
+
+ {String}                    { return stringsymbol(ChocoPyTokens.STRING, yytext().toString());}
 
   /* Operadores */
   "=="                        { return symbol(ChocoPyTokens.EQEQ  , yytext()); }
