@@ -218,6 +218,7 @@ non terminal Declaration       declare;
 non terminal TypedVar          typed_var;
 non terminal VarDef            var_def;
 non terminal MemberExpr        member_expr;
+non terminal IndexExpr         index_expr;
 
 /* Declaração de não terminais relacionados a expressões e literais */
 non terminal Stmt              stmt, expr_stmt, assign_stmt, simple_stmt;
@@ -300,8 +301,10 @@ class_def ::= CLASS:c identifier:id LPAREN identifier:id2 RPAREN COLON NEWLINE I
                           {: RESULT = new ClassDef(cxleft,cbxright,id,id2,cb); :}
             ;
 
-class_body ::= func_def:fd {: RESULT = single(fd); :}
-           | var_def:vd  {: RESULT = single(vd); :}
+class_body ::= func_def:fd              {: RESULT = single(fd); :}
+           | var_def:vd                 {: RESULT = single(vd); :}
+           | class_body:cb func_def:fd  {: RESULT = (fd != null)? combine(cb,fd) : cb; :}
+           | class_body:cb var_def:vd   {: RESULT = combine(cb,vd); :}
            ;
 
 func_def ::= DEF:d identifier:id LPAREN typed_var_list:tvl RPAREN ARROW type:t COLON NEWLINE INDENT opt_declare_list:dl stmt_list:sl DEDENT:de
@@ -367,8 +370,10 @@ assign_stmt ::= assign_targets:l EQ expr:e {: RESULT = new AssignStmt(lxleft,exr
 
 assign_targets ::= identifier:id                      {: RESULT = single(id); :}
                 | member_expr:me                      {: RESULT = single(me); :}
+                | index_expr:ide                      {: RESULT = single(ide); :}
                 | assign_targets:at EQ identifier:id  {: RESULT = combine(at,id); :}
                 | assign_targets:at EQ member_expr:me {: RESULT = combine(at,me); :}
+                | assign_targets:at EQ index_expr:ide {: RESULT = combine(at,ide); :}
                 ;
 
 expr_list ::= expr:e                     {: RESULT = single(e); :}
@@ -391,9 +396,13 @@ pexpr ::= binary_expr:e                                   {: RESULT = e; :}
         | identifier:id LPAREN:lp expr_list:l RPAREN:rp   {: RESULT = new CallExpr(idxleft, rpxright, id, l); :}
         | member_expr:me                                  {: RESULT = me; :}
         | member_expr:me LPAREN:l expr_list:el RPAREN:r   {: RESULT = new MethodCallExpr(mexleft, rxright, me, el); :}
+        | index_expr:ie                                   {: RESULT = ie; :}
         ;
 
 member_expr ::= pexpr:p DOT:op identifier:id {: RESULT = new MemberExpr(pxleft, idxright, p, id); :}
+             ;
+
+index_expr ::= pexpr:p1 LINDEX:op1 expr:p2 RINDEX:op2 {: RESULT = new IndexExpr(p1xleft, op2xright, p1, p2); :}
              ;
 
 literal ::= TRUE:l  {: RESULT = new BooleanLiteral(lxleft, lxright, l); :}
