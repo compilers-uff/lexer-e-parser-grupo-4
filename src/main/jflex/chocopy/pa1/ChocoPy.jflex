@@ -99,7 +99,9 @@ Comment = "#".*
   "elif"                      { return symbol(ChocoPyTokens.ELIF); }
   "def"                       { return symbol(ChocoPyTokens.DEF); }
   "not"                       { return symbol(ChocoPyTokens.NOT); }
+  "for"                       { return symbol(ChocoPyTokens.FOR); }
   "if"                        { return symbol(ChocoPyTokens.IF); }
+  "in"                        { return symbol(ChocoPyTokens.IN); }
 
   /* Literals. */
   {IntegerLiteral}            { return symbol(ChocoPyTokens.INTEGER,
@@ -110,6 +112,7 @@ Comment = "#".*
 
   /* Operadores */
   "=="                        { return symbol(ChocoPyTokens.EQEQ  , yytext()); }
+  ">"                         { return symbol(ChocoPyTokens.GT    , yytext()); }
   "<="                        { return symbol(ChocoPyTokens.LE    , yytext()); }
   "("                         { return symbol(ChocoPyTokens.LPAREN, yytext()); }
   ")"                         { return symbol(ChocoPyTokens.RPAREN, yytext()); }

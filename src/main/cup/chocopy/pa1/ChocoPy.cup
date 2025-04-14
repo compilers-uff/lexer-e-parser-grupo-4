@@ -178,7 +178,8 @@ terminal boolean TRUE, FALSE;
 terminal PASS, RETURN;
 terminal DEF;
 terminal CLASS;
-terminal IF, ELIF, WHILE;
+terminal IF, ELIF, WHILE, FOR;
+terminal IN;
 terminal INDENT, DEDENT;
 
 terminal Integer INTEGER;
@@ -187,7 +188,7 @@ terminal String IDENTIFIER;
 /* Declaração de terminais operadores */
 terminal String PLUS, MINUS;
 terminal String MOD;
-terminal String EQ, EQEQ, LE;
+terminal String EQ, EQEQ, LE, GT;
 terminal String LPAREN, RPAREN;
 terminal String LINDEX, RINDEX;
 terminal String COMMA, COLON, DOT;
@@ -230,7 +231,7 @@ non terminal Identifier        identifier;
 /* Precedences (lowest to highest) for resolving what would otherwise be
  * ambiguities in the form of shift/reduce conflicts.. */
 precedence left PLUS, MINUS;
-precedence nonassoc LE, EQEQ;
+precedence nonassoc GT, LE, EQEQ;
 precedence right IF, ELIF;
 precedence left MOD;
 precedence left DOT;
@@ -347,6 +348,7 @@ stmt_list ::= stmt:s                 {: RESULT = single(s); :}
 stmt ::= simple_stmt:s NEWLINE                      {: RESULT = s; :}
       | WHILE:w expr:e COLON block:b                {: RESULT = new WhileStmt(wxleft, getRight(b), e, b); :}
       | IF:op expr:e COLON block:b opt_elif_list:l  {: RESULT = new IfStmt(opxleft, getRight(b), e, b, l); :}
+      | FOR:f identifier:id IN expr:e COLON block:b {: RESULT = new ForStmt(fxleft, getRight(b), id, e, b); :}
       ;
 
 opt_elif_list ::= ELIF:op expr:e COLON block:b opt_elif_list:l
@@ -390,6 +392,7 @@ expr ::= cexpr:e                          {: RESULT = e; :}
 cexpr ::= pexpr:e                 {: RESULT = e; :}
         | cexpr:e1 EQEQ:op pexpr:e2 {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         | cexpr:e1 LE:op pexpr:e2 {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+        | cexpr:e1 GT:op pexpr:e2 {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         ;
 
 pexpr ::= binary_expr:e                                   {: RESULT = e; :}
@@ -400,6 +403,7 @@ pexpr ::= binary_expr:e                                   {: RESULT = e; :}
         | member_expr:me                                  {: RESULT = me; :}
         | member_expr:me LPAREN:l expr_list:el RPAREN:r   {: RESULT = new MethodCallExpr(mexleft, rxright, me, el); :}
         | index_expr:ie                                   {: RESULT = ie; :}
+        | MINUS:op pexpr:p                                {: RESULT = new UnaryExpr(opxleft, pxright, op, p); :}
         ;
 
 member_expr ::= pexpr:p DOT:op identifier:id {: RESULT = new MemberExpr(pxleft, idxright, p, id); :}
