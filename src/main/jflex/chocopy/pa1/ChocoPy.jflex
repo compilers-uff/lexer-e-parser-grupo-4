@@ -98,6 +98,7 @@ Comment = "#".*
   "pass"                      { return symbol(ChocoPyTokens.PASS); }
   "elif"                      { return symbol(ChocoPyTokens.ELIF); }
   "def"                       { return symbol(ChocoPyTokens.DEF); }
+  "not"                       { return symbol(ChocoPyTokens.NOT); }
   "if"                        { return symbol(ChocoPyTokens.IF); }
 
   /* Literals. */

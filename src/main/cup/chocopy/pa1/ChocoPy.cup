@@ -192,6 +192,7 @@ terminal String LPAREN, RPAREN;
 terminal String LINDEX, RINDEX;
 terminal String COMMA, COLON, DOT;
 terminal String ARROW;
+terminal String NOT;
 
 /* Returned by the lexer for erroneous tokens.  Since it does not appear in
  * the grammar, it indicates a syntax error. */
@@ -233,6 +234,7 @@ precedence nonassoc LE, EQEQ;
 precedence right IF, ELIF;
 precedence left MOD;
 precedence left DOT;
+precedence left NOT;
 
 /* The start symbol. */
 start with program;
@@ -381,7 +383,8 @@ expr_list ::= expr:e                     {: RESULT = single(e); :}
             |                            {: RESULT = empty(); :}
             ;
 
-expr ::= cexpr:e        {: RESULT = e; :}
+expr ::= cexpr:e                          {: RESULT = e; :}
+       | NOT:op expr:e                    {: RESULT = new UnaryExpr(opxleft,exright,op,e); :}
        ;
 
 cexpr ::= pexpr:e                 {: RESULT = e; :}
