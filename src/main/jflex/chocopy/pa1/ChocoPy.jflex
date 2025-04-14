@@ -131,6 +131,7 @@ String = \"([^"\\"\"] | "\\t" | "\\n" | "\\\\" | "\\\"")+\"
   "return"                    { return symbol(ChocoPyTokens.RETURN); }
   "class"                     { return symbol(ChocoPyTokens.CLASS); }
   "while"                     { return symbol(ChocoPyTokens.WHILE); }
+  "None"                      { return symbol(ChocoPyTokens.NONE); }
   "pass"                      { return symbol(ChocoPyTokens.PASS); }
   "elif"                      { return symbol(ChocoPyTokens.ELIF); }
   "def"                       { return symbol(ChocoPyTokens.DEF); }
@@ -138,6 +139,7 @@ String = \"([^"\\"\"] | "\\t" | "\\n" | "\\\\" | "\\\"")+\"
   "for"                       { return symbol(ChocoPyTokens.FOR); }
   "if"                        { return symbol(ChocoPyTokens.IF); }
   "in"                        { return symbol(ChocoPyTokens.IN); }
+  "is"                        { return symbol(ChocoPyTokens.IS); }
 
   /* Literals. */
   {IntegerLiteral}            { return symbol(ChocoPyTokens.INTEGER,

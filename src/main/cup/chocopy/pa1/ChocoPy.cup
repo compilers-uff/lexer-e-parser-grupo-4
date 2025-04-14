@@ -181,6 +181,7 @@ terminal CLASS;
 terminal IF, ELIF, WHILE, FOR;
 terminal IN;
 terminal INDENT, DEDENT;
+terminal NONE;
 
 terminal Integer INTEGER;
 terminal String IDENTIFIER;
@@ -195,6 +196,7 @@ terminal String COMMA, COLON, DOT;
 terminal String ARROW;
 terminal String STRING;
 terminal String NOT;
+terminal String IS;
 
 /* Returned by the lexer for erroneous tokens.  Since it does not appear in
  * the grammar, it indicates a syntax error. */
@@ -232,7 +234,7 @@ non terminal Identifier        identifier;
 /* Precedences (lowest to highest) for resolving what would otherwise be
  * ambiguities in the form of shift/reduce conflicts.. */
 precedence left PLUS, MINUS;
-precedence nonassoc GT, LE, EQEQ;
+precedence nonassoc GT, LE, EQEQ, IS;
 precedence right IF, ELIF;
 precedence left MOD;
 precedence left DOT;
@@ -391,10 +393,11 @@ expr ::= cexpr:e                          {: RESULT = e; :}
        | NOT:op expr:e                    {: RESULT = new UnaryExpr(opxleft,exright,op,e); :}
        ;
 
-cexpr ::= pexpr:e                 {: RESULT = e; :}
+cexpr ::= pexpr:e                   {: RESULT = e; :}
         | cexpr:e1 EQEQ:op pexpr:e2 {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
-        | cexpr:e1 LE:op pexpr:e2 {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
-        | cexpr:e1 GT:op pexpr:e2 {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+        | cexpr:e1 LE:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+        | cexpr:e1 GT:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+        | cexpr:e1 IS:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         ;
 
 pexpr ::= binary_expr:e                                   {: RESULT = e; :}
@@ -417,14 +420,12 @@ index_expr ::= pexpr:p1 LINDEX:op1 expr:p2 RINDEX:op2 {: RESULT = new IndexExpr(
 literal ::= TRUE:l    {: RESULT = new BooleanLiteral(lxleft, lxright, l); :}
           | INTEGER:n {: RESULT = new IntegerLiteral(nxleft, nxright, n); :}
           | STRING:s  {: RESULT = new StringLiteral(sxleft, sxright, s.substring(1,s.length()-1)); :}
+          | NONE:n   {: RESULT = new NoneLiteral(nxleft, nxright); :}
           ;
 
 /* A binary expression, illustrating how to find the left and right
  * source position of a phrase. */
-binary_expr ::= pexpr:e1 PLUS:op pexpr:e2
-                    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
-              | pexpr:e1 MINUS:op pexpr:e2
-                    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
-              | pexpr:e1 MOD:op pexpr:e2
-                    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+binary_expr ::= pexpr:e1 PLUS:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 MINUS:op pexpr:e2  {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 MOD:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
               ;
