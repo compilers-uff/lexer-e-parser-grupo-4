@@ -188,8 +188,8 @@ terminal String IDENTIFIER;
 
 /* Declaração de terminais operadores */
 terminal String PLUS, MINUS;
-terminal String MOD;
-terminal String EQ, EQEQ, LE, GT;
+terminal String MOD, TIMES, DOUBLESLASH;
+terminal String EQ, EQEQ, LE, GT, LEEQ, GTEQ, DIFF;
 terminal String LPAREN, RPAREN;
 terminal String LINDEX, RINDEX;
 terminal String COMMA, COLON, DOT;
@@ -197,6 +197,8 @@ terminal String ARROW;
 terminal String STRING;
 terminal String NOT;
 terminal String IS;
+terminal String OR;
+terminal String AND;
 
 /* Returned by the lexer for erroneous tokens.  Since it does not appear in
  * the grammar, it indicates a syntax error. */
@@ -233,12 +235,14 @@ non terminal Identifier        identifier;
 
 /* Precedences (lowest to highest) for resolving what would otherwise be
  * ambiguities in the form of shift/reduce conflicts.. */
-precedence left PLUS, MINUS;
-precedence nonassoc GT, LE, EQEQ, IS;
 precedence right IF, ELIF;
-precedence left MOD;
-precedence left DOT;
+precedence left OR;
+precedence left AND;
 precedence left NOT;
+precedence nonassoc EQEQ, DIFF, LE, GT, LEEQ, GTEQ, IS;
+precedence left PLUS, MINUS;
+precedence left TIMES, DOUBLESLASH, MOD;
+precedence left DOT;
 
 /* The start symbol. */
 start with program;
@@ -427,5 +431,14 @@ literal ::= TRUE:l    {: RESULT = new BooleanLiteral(lxleft, lxright, l); :}
  * source position of a phrase. */
 binary_expr ::= pexpr:e1 PLUS:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
               | pexpr:e1 MINUS:op pexpr:e2  {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 TIMES:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 DOUBLESLASH:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
               | pexpr:e1 MOD:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 EQEQ:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 DIFF:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 LEEQ:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 GTEQ:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 LE:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 GT:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 IS:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
               ;
