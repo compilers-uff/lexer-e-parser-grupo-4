@@ -179,6 +179,7 @@ terminal PASS, RETURN;
 terminal DEF;
 terminal CLASS;
 terminal IF, ELIF, WHILE, FOR;
+terminal GLOBAL;
 terminal IN;
 terminal INDENT, DEDENT;
 terminal NONE;
@@ -194,7 +195,7 @@ terminal String LPAREN, RPAREN;
 terminal String LINDEX, RINDEX;
 terminal String COMMA, COLON, DOT;
 terminal String ARROW;
-terminal String STRING;
+terminal String STRING, IDSTRING;
 terminal String NOT;
 terminal String IS;
 
@@ -297,8 +298,9 @@ opt_declare_list ::= opt_declare_list:l declare:d {: RESULT = combine(l,d); :}
                    | {: RESULT = empty(); :}
                    ;
 
-declare ::= func_def:fd {: RESULT = fd; :}
-          | var_def:vd  {: RESULT = vd; :}
+declare ::= func_def:fd                     {: RESULT = fd; :}
+          | var_def:vd                      {: RESULT = vd; :}
+          | GLOBAL:g identifier:id NEWLINE  {: RESULT = new GlobalDecl(gxleft,idxright,id); :}
           ;
 
 class_def ::= CLASS:c identifier:id LPAREN identifier:id2 RPAREN COLON NEWLINE INDENT PASS NEWLINE:nl DEDENT:d
@@ -329,6 +331,7 @@ identifier ::= IDENTIFIER:id {: RESULT = new Identifier(idxleft,idxright,id); :}
 
 type ::= IDENTIFIER:id              {: RESULT = new ClassType(idxleft,idxright,id); :}
       | LINDEX:ld type:t RINDEX:rd  {: RESULT = new ListType(ldxleft,rdxright,t); :}
+      | IDSTRING:ids                {: RESULT = new ClassType(idsxleft,idsxright, ids.substring(1,ids.length()-1)); :}
       ;
 
 typed_var_list ::= typed_var:t                        {: RESULT = single(t); :}
@@ -417,10 +420,11 @@ member_expr ::= pexpr:p DOT:op identifier:id {: RESULT = new MemberExpr(pxleft, 
 index_expr ::= pexpr:p1 LINDEX:op1 expr:p2 RINDEX:op2 {: RESULT = new IndexExpr(p1xleft, op2xright, p1, p2); :}
              ;
 
-literal ::= TRUE:l    {: RESULT = new BooleanLiteral(lxleft, lxright, l); :}
-          | INTEGER:n {: RESULT = new IntegerLiteral(nxleft, nxright, n); :}
-          | STRING:s  {: RESULT = new StringLiteral(sxleft, sxright, s.substring(1,s.length()-1)); :}
-          | NONE:n   {: RESULT = new NoneLiteral(nxleft, nxright); :}
+literal ::= TRUE:l        {: RESULT = new BooleanLiteral(lxleft, lxright, l); :}
+          | INTEGER:n     {: RESULT = new IntegerLiteral(nxleft, nxright, n); :}
+          | STRING:s      {: RESULT = new StringLiteral(sxleft, sxright, s.substring(1,s.length()-1)); :}
+          | NONE:n        {: RESULT = new NoneLiteral(nxleft, nxright); :}
+          | IDSTRING:ids  {: RESULT = new StringLiteral(idsxleft, idsxright, ids.substring(1,ids.length()-1)); :}
           ;
 
 /* A binary expression, illustrating how to find the left and right

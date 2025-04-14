@@ -105,6 +105,7 @@ Identifier = [a-zA-Z_][a-zA-Z0-9_]*
 IntegerLiteral = 0 | [1-9][0-9]*
 Comment = "#".*
 String = \"([^"\\"\"] | "\\t" | "\\n" | "\\\\" | "\\\"")+\"
+IDString = \"{Identifier}\"
 
 %%
 
@@ -129,6 +130,7 @@ String = \"([^"\\"\"] | "\\t" | "\\n" | "\\\\" | "\\\"")+\"
   "False"                     { return symbol(ChocoPyTokens.FALSE, false); }
   "True"                      { return symbol(ChocoPyTokens.TRUE, true); }
   "return"                    { return symbol(ChocoPyTokens.RETURN); }
+  "global"                    { return symbol(ChocoPyTokens.GLOBAL); }
   "class"                     { return symbol(ChocoPyTokens.CLASS); }
   "while"                     { return symbol(ChocoPyTokens.WHILE); }
   "None"                      { return symbol(ChocoPyTokens.NONE); }
@@ -149,8 +151,9 @@ String = \"([^"\\"\"] | "\\t" | "\\n" | "\\\\" | "\\\"")+\"
  {Identifier}                { return symbol(ChocoPyTokens.IDENTIFIER, yytext()); }
 
  /* String */
-
  {String}                    { return stringsymbol(ChocoPyTokens.STRING, yytext().toString());}
+
+ {IDString}                  { return symbol(ChocoPyTokens.IDSTRING, yytext());}
 
   /* Operadores */
   "=="                        { return symbol(ChocoPyTokens.EQEQ  , yytext()); }
