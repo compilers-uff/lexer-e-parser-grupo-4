@@ -427,6 +427,7 @@ pexpr ::= binary_expr:e                                   {: RESULT = e; :}
         | LPAREN expr:e RPAREN                            {: RESULT = e; :}
         | identifier:id                                   {: RESULT = id; :}
         | identifier:id LPAREN:lp expr_list:l RPAREN:rp   {: RESULT = new CallExpr(idxleft, rpxright, id, l); :}
+        | LINDEX:lop expr_list:l RINDEX:rop               {: RESULT = new ListExpr(lopxleft, ropxright, l); :}
         | member_expr:me                                  {: RESULT = me; :}
         | member_expr:me LPAREN:l expr_list:el RPAREN:r   {: RESULT = new MethodCallExpr(mexleft, rxright, me, el); :}
         | index_expr:ie                                   {: RESULT = ie; :}
@@ -439,24 +440,26 @@ member_expr ::= pexpr:p DOT:op identifier:id {: RESULT = new MemberExpr(pxleft, 
 index_expr ::= pexpr:p1 LINDEX:op1 expr:p2 RINDEX:op2 {: RESULT = new IndexExpr(p1xleft, op2xright, p1, p2); :}
              ;
 
-literal ::= TRUE:l    {: RESULT = new BooleanLiteral(lxleft, lxright, l); :}
-          | INTEGER:n {: RESULT = new IntegerLiteral(nxleft, nxright, n); :}
-          | STRING:s  {: RESULT = new StringLiteral(sxleft, sxright, s.substring(1,s.length()-1)); :}
-          | NONE:n   {: RESULT = new NoneLiteral(nxleft, nxright); :}
+literal ::= TRUE:l        {: RESULT = new BooleanLiteral(lxleft, lxright, l); :}
+          | FALSE:l       {: RESULT = new BooleanLiteral(lxleft, lxright, l); :}
+          | INTEGER:n     {: RESULT = new IntegerLiteral(nxleft, nxright, n); :}
+          | STRING:s      {: RESULT = new StringLiteral(sxleft, sxright, s.substring(1,s.length()-1)); :}
+          | IDSTRING:ids  {: RESULT = new StringLiteral(idsxleft, idsxright, ids.substring(1,ids.length()-1)); :}
+          | NONE:n        {: RESULT = new NoneLiteral(nxleft, nxright); :}
           ;
 
 /* A binary expression, illustrating how to find the left and right
  * source position of a phrase. */
-binary_expr ::= pexpr:e1 PLUS:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
-              | pexpr:e1 MINUS:op pexpr:e2  {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
-              | pexpr:e1 TIMES:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+binary_expr ::= pexpr:e1 PLUS:op pexpr:e2           {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 MINUS:op pexpr:e2          {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 TIMES:op pexpr:e2          {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
               | pexpr:e1 DOUBLESLASH:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
-              | pexpr:e1 MOD:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
-              | pexpr:e1 EQEQ:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
-              | pexpr:e1 NEQ:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
-              | pexpr:e1 LEQ:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
-              | pexpr:e1 GEQ:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
-              | pexpr:e1 LT:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
-              | pexpr:e1 GT:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
-              | pexpr:e1 IS:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 MOD:op pexpr:e2            {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 EQEQ:op pexpr:e2           {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 NEQ:op pexpr:e2            {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 LEQ:op pexpr:e2            {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 GEQ:op pexpr:e2            {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 LT:op pexpr:e2             {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 GT:op pexpr:e2             {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 IS:op pexpr:e2             {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
               ;
