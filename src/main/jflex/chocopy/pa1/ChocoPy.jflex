@@ -163,7 +163,7 @@ IDString = \"{Identifier}\"
   /* Operadores */
   "=="                        { return symbol(ChocoPyTokens.EQEQ  , yytext()); }
   ">"                         { return symbol(ChocoPyTokens.GT    , yytext()); }
-  ">="                         { return symbol(ChocoPyTokens.GEQ    , yytext()); }
+  ">="                        { return symbol(ChocoPyTokens.GEQ    , yytext()); }
   "<"                         { return symbol(ChocoPyTokens.LT    , yytext()); }
   "<="                        { return symbol(ChocoPyTokens.LEQ    , yytext()); }
   "("                         { return symbol(ChocoPyTokens.LPAREN, yytext()); }

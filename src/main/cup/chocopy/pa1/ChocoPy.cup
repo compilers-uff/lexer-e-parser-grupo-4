@@ -196,7 +196,7 @@ terminal String LPAREN, RPAREN;
 terminal String LINDEX, RINDEX;
 terminal String COMMA, COLON, DOT;
 terminal String ARROW;
-terminal String STRING;
+terminal String STRING, IDSTRING;
 terminal String NOT;
 terminal String IS;
 terminal String OR;
@@ -214,7 +214,7 @@ terminal UNRECOGNIZED;
 
 /* Declaração de não terminais principais */
 non terminal Program           program;
-non terminal List<Declaration> program_head, opt_declare_list, class_body, func_body;
+non terminal List<Declaration> program_head, class_body, func_body;
 non terminal List<Stmt>        stmt_list, opt_stmt_list, block, opt_elif_list;
 non terminal List<Expr>        expr_list, assign_targets;
 non terminal List<TypedVar>    typed_var_list;
@@ -223,7 +223,7 @@ non terminal List<TypedVar>    typed_var_list;
 non terminal FuncDef           func_def;
 non terminal ClassDef          class_def;
 non terminal TypeAnnotation    type;
-non terminal Declaration       declare;
+non terminal Declaration       func_body_decl;
 non terminal TypedVar          typed_var;
 non terminal VarDef            var_def;
 non terminal MemberExpr        member_expr;
@@ -301,12 +301,14 @@ program_head ::= {: RESULT = empty(); :}
                | program_head:h var_def:vd   {: RESULT = combine(h,vd); :}
                ;
 
-opt_declare_list ::= opt_declare_list:l declare:d {: RESULT = combine(l,d); :}
-                   | {: RESULT = empty(); :}
+func_body ::= func_body:l func_body_decl:d {: RESULT = combine(l,d); :}
+                   |                {: RESULT = empty(); :}
                    ;
 
-declare ::= func_def:fd {: RESULT = fd; :}
-          | var_def:vd  {: RESULT = vd; :}
+func_body_decl ::= func_def:fd                {: RESULT = fd; :}
+          | var_def:vd                        {: RESULT = vd; :}
+          | GLOBAL:g identifier:id NEWLINE    {: RESULT = new GlobalDecl(gxleft,idxright,id); :}
+          | NONLOCAL:l identifier:id NEWLINE  {: RESULT = new NonLocalDecl(lxleft,idxright,id); :}
           ;
 
 class_def ::= CLASS:c identifier:id LPAREN identifier:id2 RPAREN COLON NEWLINE INDENT PASS NEWLINE:nl DEDENT:d
@@ -319,19 +321,14 @@ class_body ::= func_def:fd              {: RESULT = single(fd); :}
            | var_def:vd                 {: RESULT = single(vd); :}
            | class_body:cb func_def:fd  {: RESULT = (fd != null)? combine(cb,fd) : cb; :}
            | class_body:cb var_def:vd   {: RESULT = combine(cb,vd); :}
+           | class_body:cb error        {: RESULT = cb; :}
+           | error                      {: RESULT=empty(); :}
            ;
 
-func_def ::= DEF:d identifier:id LPAREN typed_var_list:tvl RPAREN ARROW type:t COLON NEWLINE INDENT func_body:fb stmt_list:sl DEDENT:de
-                                  {: RESULT = new FuncDef(dxleft,getRight(sl),id,tvl,t,fb, sl); :}
-
+func_def ::= DEF:d identifier:id LPAREN typed_var_list:tvl RPAREN ARROW type:t COLON NEWLINE INDENT func_body:opt stmt_list:sl DEDENT:de
+                                  {: RESULT = new FuncDef(dxleft,getRight(sl),id,tvl,t,opt, sl); :}
+          | DEF error DEDENT      {: RESULT = null; :}
           ;
-
-func_body ::= func_body:fbd global_decl:gd             {: RESULT = combine(fbd, gd); :}
-            | func_body:fbd nonlocal_decl:nld           {: RESULT = combine(fbd, nld); :}
-            | func_body:fbd var_def:vd                  {: RESULT = combine(fbd, vd); :}
-            | func_body:fbd func_def:fd                 {: RESULT = combine(fbd, fd); :}
-            |                                           {: RESULT = empty(); :}
-            ;
 
 global_decl ::= GLOBAL identifier:id NEWLINE {: RESULT = new GlobalDecl(idxleft,idxright,id); :};
 
@@ -348,19 +345,22 @@ identifier ::= IDENTIFIER:id {: RESULT = new Identifier(idxleft,idxright,id); :}
 
 type ::= IDENTIFIER:id              {: RESULT = new ClassType(idxleft,idxright,id); :}
       | LINDEX:ld type:t RINDEX:rd  {: RESULT = new ListType(ldxleft,rdxright,t); :}
+      | IDSTRING:ids                {: RESULT = new ClassType(idsxleft,idsxright,ids.substring(1,ids.length()-1)); :}
       ;
 
 typed_var_list ::= typed_var:t                        {: RESULT = single(t); :}
                 | typed_var_list:l COMMA typed_var:t  {: RESULT = combine(l,t); :}
+                | typed_var_list:l COMMA error         {: RESULT = l; :}
                 |                                     {: RESULT = empty(); :}
                 ;
 
-opt_stmt_list ::=                    {: RESULT = empty(); :}
-                | stmt_list:s        {: RESULT = s; :}
+opt_stmt_list ::=             {: RESULT = empty(); :}
+                | stmt_list:s {: RESULT = s; :}
                 ;
 
 stmt_list ::= stmt:s                 {: RESULT = single(s); :}
             | stmt_list:l stmt:s     {: RESULT = combine(l, s); :}
+            | stmt_list:l error      {: RESULT = l; :}
             | error                  {: RESULT = empty(); :}
             // Quando um erro de sintaxe é encontrado, esta regra captura o erro
             // e retorna uma lista vazia. Isso permite que o parser continue
@@ -368,14 +368,16 @@ stmt_list ::= stmt:s                 {: RESULT = single(s); :}
             // sem interromper o processo de parsing.
             ;
 
-stmt ::= simple_stmt:s NEWLINE                      {: RESULT = s; :}
-      | WHILE:w expr:e COLON block:b                {: RESULT = new WhileStmt(wxleft, getRight(b), e, b); :}
-      | IF:op expr:cond COLON block:b opt_elif_list:l  {: RESULT = new IfStmt(opxleft, getRight(b), cond, b, l); :}
-      | FOR:f identifier:id IN expr:e COLON block:b {: RESULT = new ForStmt(fxleft, getRight(b), id, e, b); :}
+stmt ::= simple_stmt:s NEWLINE                          {: RESULT = s; :}
+      | WHILE:w expr:e COLON block:b                    {: RESULT = new WhileStmt(wxleft, getRight(b), e, b); :}
+      | IF:op expr:cond COLON block:b opt_elif_list:l   {: RESULT = new IfStmt(opxleft, getRight(b), cond, b, l); :}
+      | IF:op expr:e COLON block:b                      {: RESULT = new IfStmt(opxleft, getRight(b), e, b, empty()); :}
+      | FOR:f identifier:id IN expr:e COLON block:b     {: RESULT = new ForStmt(fxleft, getRight(b), id, e, b); :}
       ;
 
 opt_elif_list ::= ELIF:op expr:cond COLON block:b opt_elif_list:l {: Stmt s = new IfStmt(opxleft,getRight(l),cond,b,l); RESULT =single(s); :}
                 | ELIF:op expr:cond COLON block:b                 {: Stmt s =new IfStmt(opxleft,getRight(b),cond,b,empty()); RESULT = single(s); :}
+                | ELSE COLON block:b                              {: RESULT=b; :}
                 ;
 
 block ::= NEWLINE INDENT stmt_list:l DEDENT {: RESULT = l; :}
@@ -385,6 +387,7 @@ simple_stmt ::= expr_stmt:e     {: RESULT = e; :}
               | assign_stmt:s   {: RESULT = s; :}
               | RETURN:r expr:e {: RESULT = new ReturnStmt(rxleft,exright,e); :}
               | RETURN:r        {: RESULT = new ReturnStmt(rxleft,rxright,null); :}
+              | PASS {::}
               ;
 
 expr_stmt ::= expr:e {: RESULT = new ExprStmt(exleft, exright, e); :}
@@ -403,6 +406,7 @@ assign_targets ::= identifier:id                      {: RESULT = single(id); :}
 
 expr_list ::= expr:e                     {: RESULT = single(e); :}
             | expr_list:l COMMA expr:e   {: RESULT = combine(l,e); :}
+            | expr_list:l COMMA error    {: RESULT = l; :}
             |                            {: RESULT = empty(); :}
             ;
 
@@ -415,6 +419,9 @@ expr ::= cexpr:e                          {: RESULT = e; :}
 
 cexpr ::= pexpr:e                   {: RESULT = e; :}
         | cexpr:e1 EQEQ:op pexpr:e2 {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+        | cexpr:e1 NEQ:op pexpr:e2  {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+        | cexpr:e1 LEQ:op pexpr:e2  {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+        | cexpr:e1 GEQ:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         | cexpr:e1 LT:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         | cexpr:e1 GT:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         | cexpr:e1 IS:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
