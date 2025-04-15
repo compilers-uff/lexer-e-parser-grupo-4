@@ -19,3 +19,11 @@ Tokens NEWLINE são emitidos somente se:
 Caso 1: Não está na primeira linha do arquivo.
 
 Caso 2: Está na primeira linha do arquivo mas não é o primeiro caracter não white-space. 
+
+## String Literals
+
+A implementação de Strings Literals foi um desafio particular pela falta de familiaridade com regex e pela necessidade de uma função para identificação dos caracteres de escape disponíveis do ChocoPy.
+
+A função está disponível em ChocoPy.jflex entre as linhas 41 e 74.
+
+O regex correspondente está em ChocoPy.jflex na linha 107.
