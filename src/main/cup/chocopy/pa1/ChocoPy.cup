@@ -178,19 +178,20 @@ terminal boolean TRUE, FALSE;
 terminal PASS, RETURN;
 terminal DEF;
 terminal CLASS;
-terminal IF, ELIF, WHILE, FOR;
-terminal GLOBAL;
+terminal IF, ELIF, ELSE, WHILE, FOR;
 terminal IN;
 terminal INDENT, DEDENT;
 terminal NONE;
+terminal GLOBAL;
+terminal NONLOCAL;
 
 terminal Integer INTEGER;
 terminal String IDENTIFIER;
 
 /* Declaração de terminais operadores */
 terminal String PLUS, MINUS;
-terminal String MOD;
-terminal String EQ, EQEQ, LE, GT;
+terminal String MOD, TIMES, DOUBLESLASH;
+terminal String EQ, EQEQ, LT, LE, GT, LEQ, GEQ, NEQ;
 terminal String LPAREN, RPAREN;
 terminal String LINDEX, RINDEX;
 terminal String COMMA, COLON, DOT;
@@ -198,6 +199,8 @@ terminal String ARROW;
 terminal String STRING, IDSTRING;
 terminal String NOT;
 terminal String IS;
+terminal String OR;
+terminal String AND;
 
 /* Returned by the lexer for erroneous tokens.  Since it does not appear in
  * the grammar, it indicates a syntax error. */
@@ -211,7 +214,7 @@ terminal UNRECOGNIZED;
 
 /* Declaração de não terminais principais */
 non terminal Program           program;
-non terminal List<Declaration> program_head, opt_declare_list, class_body;
+non terminal List<Declaration> program_head, opt_declare_list, class_body, func_body;
 non terminal List<Stmt>        stmt_list, opt_stmt_list, block, opt_elif_list;
 non terminal List<Expr>        expr_list, assign_targets;
 non terminal List<TypedVar>    typed_var_list;
@@ -225,6 +228,8 @@ non terminal TypedVar          typed_var;
 non terminal VarDef            var_def;
 non terminal MemberExpr        member_expr;
 non terminal IndexExpr         index_expr;
+non terminal GlobalDecl        global_decl;
+non terminal NonLocalDecl      nonlocal_decl;
 
 /* Declaração de não terminais relacionados a expressões e literais */
 non terminal Stmt              stmt, expr_stmt, assign_stmt, simple_stmt;
@@ -234,12 +239,14 @@ non terminal Identifier        identifier;
 
 /* Precedences (lowest to highest) for resolving what would otherwise be
  * ambiguities in the form of shift/reduce conflicts.. */
+precedence right IF, ELSE, ELIF;
+precedence left OR, AND, NOT;
 precedence left PLUS, MINUS;
-precedence nonassoc GT, LE, EQEQ, IS;
-precedence right IF, ELIF;
+precedence nonassoc EQEQ, NEQ, LT, LE, GT, LEQ, GEQ, IS;
 precedence left MOD;
 precedence left DOT;
 precedence left NOT;
+precedence left TIMES, DOUBLESLASH, MOD;
 
 /* The start symbol. */
 start with program;
@@ -298,9 +305,8 @@ opt_declare_list ::= opt_declare_list:l declare:d {: RESULT = combine(l,d); :}
                    | {: RESULT = empty(); :}
                    ;
 
-declare ::= func_def:fd                     {: RESULT = fd; :}
-          | var_def:vd                      {: RESULT = vd; :}
-          | GLOBAL:g identifier:id NEWLINE  {: RESULT = new GlobalDecl(gxleft,idxright,id); :}
+declare ::= func_def:fd {: RESULT = fd; :}
+          | var_def:vd  {: RESULT = vd; :}
           ;
 
 class_def ::= CLASS:c identifier:id LPAREN identifier:id2 RPAREN COLON NEWLINE INDENT PASS NEWLINE:nl DEDENT:d
@@ -315,10 +321,21 @@ class_body ::= func_def:fd              {: RESULT = single(fd); :}
            | class_body:cb var_def:vd   {: RESULT = combine(cb,vd); :}
            ;
 
-func_def ::= DEF:d identifier:id LPAREN typed_var_list:tvl RPAREN ARROW type:t COLON NEWLINE INDENT opt_declare_list:dl stmt_list:sl DEDENT:de
-                                  {: RESULT = new FuncDef(dxleft,getRight(sl),id,tvl,t,dl,sl); :}
+func_def ::= DEF:d identifier:id LPAREN typed_var_list:tvl RPAREN ARROW type:t COLON NEWLINE INDENT func_body:fb stmt_list:sl DEDENT:de
+                                  {: RESULT = new FuncDef(dxleft,getRight(sl),id,tvl,t,fb, sl); :}
 
           ;
+
+func_body ::= func_body:fbd global_decl:gd             {: RESULT = combine(fbd, gd); :}
+            | func_body:fbd nonlocal_decl:nld           {: RESULT = combine(fbd, nld); :}
+            | func_body:fbd var_def:vd                  {: RESULT = combine(fbd, vd); :}
+            | func_body:fbd func_def:fd                 {: RESULT = combine(fbd, fd); :}
+            |                                           {: RESULT = empty(); :}
+            ;
+
+global_decl ::= GLOBAL identifier:id NEWLINE {: RESULT = new GlobalDecl(idxleft,idxright,id); :};
+
+nonlocal_decl ::= NONLOCAL identifier:id NEWLINE {: RESULT = new NonLocalDecl(idxleft,idxright,id); :};
 
 var_def ::= typed_var:tv EQ literal:l NEWLINE {: RESULT = new VarDef(tvxleft,lxright,tv,l); :}
           ;
@@ -354,14 +371,12 @@ stmt_list ::= stmt:s                 {: RESULT = single(s); :}
 
 stmt ::= simple_stmt:s NEWLINE                      {: RESULT = s; :}
       | WHILE:w expr:e COLON block:b                {: RESULT = new WhileStmt(wxleft, getRight(b), e, b); :}
-      | IF:op expr:e COLON block:b opt_elif_list:l  {: RESULT = new IfStmt(opxleft, getRight(b), e, b, l); :}
+      | IF:op expr:cond COLON block:b opt_elif_list:l  {: RESULT = new IfStmt(opxleft, getRight(b), cond, b, l); :}
       | FOR:f identifier:id IN expr:e COLON block:b {: RESULT = new ForStmt(fxleft, getRight(b), id, e, b); :}
       ;
 
-opt_elif_list ::= ELIF:op expr:e COLON block:b opt_elif_list:l
-                      {: Stmt s = new IfStmt(opxleft,getRight(l),e,b,l); RESULT =single(s); :}
-                | ELIF:op expr:e COLON block:b
-                      {: Stmt s =new IfStmt(opxleft,getRight(b),e,b,empty()); RESULT = single(s); :}
+opt_elif_list ::= ELIF:op expr:cond COLON block:b opt_elif_list:l {: Stmt s = new IfStmt(opxleft,getRight(l),cond,b,l); RESULT =single(s); :}
+                | ELIF:op expr:cond COLON block:b                 {: Stmt s =new IfStmt(opxleft,getRight(b),cond,b,empty()); RESULT = single(s); :}
                 ;
 
 block ::= NEWLINE INDENT stmt_list:l DEDENT {: RESULT = l; :}
@@ -370,7 +385,7 @@ block ::= NEWLINE INDENT stmt_list:l DEDENT {: RESULT = l; :}
 simple_stmt ::= expr_stmt:e     {: RESULT = e; :}
               | assign_stmt:s   {: RESULT = s; :}
               | RETURN:r expr:e {: RESULT = new ReturnStmt(rxleft,exright,e); :}
-              | RETURN:r {: RESULT = new ReturnStmt(rxleft,rxright,null); :}
+              | RETURN:r        {: RESULT = new ReturnStmt(rxleft,rxright,null); :}
               ;
 
 expr_stmt ::= expr:e {: RESULT = new ExprStmt(exleft, exright, e); :}
@@ -394,11 +409,15 @@ expr_list ::= expr:e                     {: RESULT = single(e); :}
 
 expr ::= cexpr:e                          {: RESULT = e; :}
        | NOT:op expr:e                    {: RESULT = new UnaryExpr(opxleft,exright,op,e); :}
+       | expr:e1 AND:op expr:e2           {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2);  :}
+       | expr:e1 OR:op expr:e2            {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2);  :}
+       | expr:e1 IF expr:e2 ELSE expr:e3 {: RESULT = new IfExpr(e1xleft, e3xright, e2, e1, e3); :}
        ;
 
 cexpr ::= pexpr:e                   {: RESULT = e; :}
         | cexpr:e1 EQEQ:op pexpr:e2 {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         | cexpr:e1 LE:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+        | cexpr:e1 LT:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         | cexpr:e1 GT:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         | cexpr:e1 IS:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         ;
@@ -420,16 +439,24 @@ member_expr ::= pexpr:p DOT:op identifier:id {: RESULT = new MemberExpr(pxleft, 
 index_expr ::= pexpr:p1 LINDEX:op1 expr:p2 RINDEX:op2 {: RESULT = new IndexExpr(p1xleft, op2xright, p1, p2); :}
              ;
 
-literal ::= TRUE:l        {: RESULT = new BooleanLiteral(lxleft, lxright, l); :}
-          | INTEGER:n     {: RESULT = new IntegerLiteral(nxleft, nxright, n); :}
-          | STRING:s      {: RESULT = new StringLiteral(sxleft, sxright, s.substring(1,s.length()-1)); :}
-          | NONE:n        {: RESULT = new NoneLiteral(nxleft, nxright); :}
-          | IDSTRING:ids  {: RESULT = new StringLiteral(idsxleft, idsxright, ids.substring(1,ids.length()-1)); :}
+literal ::= TRUE:l    {: RESULT = new BooleanLiteral(lxleft, lxright, l); :}
+          | INTEGER:n {: RESULT = new IntegerLiteral(nxleft, nxright, n); :}
+          | STRING:s  {: RESULT = new StringLiteral(sxleft, sxright, s.substring(1,s.length()-1)); :}
+          | NONE:n   {: RESULT = new NoneLiteral(nxleft, nxright); :}
           ;
 
 /* A binary expression, illustrating how to find the left and right
  * source position of a phrase. */
 binary_expr ::= pexpr:e1 PLUS:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
               | pexpr:e1 MINUS:op pexpr:e2  {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 TIMES:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 DOUBLESLASH:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
               | pexpr:e1 MOD:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 EQEQ:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 NEQ:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 LEQ:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 GEQ:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 LT:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 GT:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
+              | pexpr:e1 IS:op pexpr:e2    {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
               ;

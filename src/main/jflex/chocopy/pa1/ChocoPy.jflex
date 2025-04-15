@@ -140,8 +140,13 @@ IDString = \"{Identifier}\"
   "not"                       { return symbol(ChocoPyTokens.NOT); }
   "for"                       { return symbol(ChocoPyTokens.FOR); }
   "if"                        { return symbol(ChocoPyTokens.IF); }
+  "else"                        { return symbol(ChocoPyTokens.ELSE); }
   "in"                        { return symbol(ChocoPyTokens.IN); }
   "is"                        { return symbol(ChocoPyTokens.IS); }
+  "or"                        { return symbol(ChocoPyTokens.OR); }  
+  "and"                       { return symbol(ChocoPyTokens.AND); }
+  "global"                    { return symbol(ChocoPyTokens.GLOBAL); }
+  "nonlocal"                  { return symbol(ChocoPyTokens.NONLOCAL); }  
 
   /* Literals. */
   {IntegerLiteral}            { return symbol(ChocoPyTokens.INTEGER,
@@ -158,7 +163,9 @@ IDString = \"{Identifier}\"
   /* Operadores */
   "=="                        { return symbol(ChocoPyTokens.EQEQ  , yytext()); }
   ">"                         { return symbol(ChocoPyTokens.GT    , yytext()); }
-  "<="                        { return symbol(ChocoPyTokens.LE    , yytext()); }
+  ">="                         { return symbol(ChocoPyTokens.GEQ    , yytext()); }
+  "<"                         { return symbol(ChocoPyTokens.LT    , yytext()); }
+  "<="                        { return symbol(ChocoPyTokens.LEQ    , yytext()); }
   "("                         { return symbol(ChocoPyTokens.LPAREN, yytext()); }
   ")"                         { return symbol(ChocoPyTokens.RPAREN, yytext()); }
   "["                         { return symbol(ChocoPyTokens.LINDEX, yytext()); }
@@ -169,8 +176,11 @@ IDString = \"{Identifier}\"
   "-"                         { return symbol(ChocoPyTokens.MINUS, yytext()); }
   "+"                         { return symbol(ChocoPyTokens.PLUS, yytext()); }
   "%"                         { return symbol(ChocoPyTokens.MOD, yytext()); }
+  "//"                         { return symbol(ChocoPyTokens.DOUBLESLASH, yytext()); }
+  "*"                         { return symbol(ChocoPyTokens.TIMES, yytext()); }  
   ":"                         { return symbol(ChocoPyTokens.COLON); }
   "="                         { return symbol(ChocoPyTokens.EQ); }
+  "!="                         { return symbol(ChocoPyTokens.NEQ); }  
 
   /* Whitespace. */
   {WhiteSpace} {
