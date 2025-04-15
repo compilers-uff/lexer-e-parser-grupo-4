@@ -191,12 +191,12 @@ terminal String IDENTIFIER;
 /* Declaração de terminais operadores */
 terminal String PLUS, MINUS;
 terminal String MOD, TIMES, DOUBLESLASH;
-terminal String EQ, EQEQ, LT, LE, GT, LEQ, GEQ, NEQ;
+terminal String EQ, EQEQ, LT, GT, LEQ, GEQ, NEQ;
 terminal String LPAREN, RPAREN;
 terminal String LINDEX, RINDEX;
 terminal String COMMA, COLON, DOT;
 terminal String ARROW;
-terminal String STRING, IDSTRING;
+terminal String STRING;
 terminal String NOT;
 terminal String IS;
 terminal String OR;
@@ -228,7 +228,7 @@ non terminal TypedVar          typed_var;
 non terminal VarDef            var_def;
 non terminal MemberExpr        member_expr;
 non terminal IndexExpr         index_expr;
-non terminal GlobalDecl        global_decl;
+non terminal GlobalDecl        global_decl; 
 non terminal NonLocalDecl      nonlocal_decl;
 
 /* Declaração de não terminais relacionados a expressões e literais */
@@ -240,13 +240,13 @@ non terminal Identifier        identifier;
 /* Precedences (lowest to highest) for resolving what would otherwise be
  * ambiguities in the form of shift/reduce conflicts.. */
 precedence right IF, ELSE, ELIF;
-precedence left OR, AND, NOT;
-precedence left PLUS, MINUS;
-precedence nonassoc EQEQ, NEQ, LT, LE, GT, LEQ, GEQ, IS;
-precedence left MOD;
-precedence left DOT;
+precedence left OR;
+precedence left AND;
 precedence left NOT;
+precedence nonassoc EQEQ, NEQ, LT, GT, LEQ, GEQ, IS;
+precedence left PLUS, MINUS;
 precedence left TIMES, DOUBLESLASH, MOD;
+precedence left DOT;
 
 /* The start symbol. */
 start with program;
@@ -348,7 +348,6 @@ identifier ::= IDENTIFIER:id {: RESULT = new Identifier(idxleft,idxright,id); :}
 
 type ::= IDENTIFIER:id              {: RESULT = new ClassType(idxleft,idxright,id); :}
       | LINDEX:ld type:t RINDEX:rd  {: RESULT = new ListType(ldxleft,rdxright,t); :}
-      | IDSTRING:ids                {: RESULT = new ClassType(idsxleft,idsxright, ids.substring(1,ids.length()-1)); :}
       ;
 
 typed_var_list ::= typed_var:t                        {: RESULT = single(t); :}
@@ -416,7 +415,6 @@ expr ::= cexpr:e                          {: RESULT = e; :}
 
 cexpr ::= pexpr:e                   {: RESULT = e; :}
         | cexpr:e1 EQEQ:op pexpr:e2 {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
-        | cexpr:e1 LE:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         | cexpr:e1 LT:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         | cexpr:e1 GT:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
         | cexpr:e1 IS:op pexpr:e2   {: RESULT = new BinaryExpr(e1xleft,e2xright,e1,op,e2); :}
