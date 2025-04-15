@@ -6,6 +6,12 @@ Membro 2: Daniel José de Macedo Santos
 
 Membro 3: Caio Henrique Velloso Paranhos
 
+## Agradecimentos
+Somos gratos ao autor desse arquivo https://piazza.com/class_profile/get_resource/i7dughpewipz/i8hpsi1fagk3sb que nos ajudou a compreender as mensagens de erro do cup, fundamentais para o desenvolvimento.
+
+## Horas dedicadas
+Cerca de 22 horas totais foram dedicadas ao desevolvimento do projeto.
+
 ## Estratégia de indentação
 Nós utilizamos uma Stack para guardar e manipular os valores de indentação, após cada linebreak o lexer vai para o estado INDENTSTATE e sempre que um caracter ou white-space não seguido de comment ou linebreak é indentificado é realizada uma contagem de indentação, em seguida esse valor é comparado com o ultimo valor guardado na Stack, se o valor for maior então um token INDENT é emitido, mas se o valor for menor então um token DEDENT é emitido, caso for igual o lexer apenas volta para o estado inicial. Ao final do programa (EOF) tokens DEDENT adicionais são emitidos até restar apenas o valor 0 na Stack.
 
