@@ -106,6 +106,7 @@ IntegerLiteral = 0 | [1-9][0-9]*
 Comment = "#".*
 String = \"([^"\\"\"] | "\\t" | "\\n" | "\\\\" | "\\\"")+\"
 IDString = \"{Identifier}\"
+InvalidString = \"[^\"]*\"
 
 %%
 
@@ -130,13 +131,11 @@ IDString = \"{Identifier}\"
   "False"                     { return symbol(ChocoPyTokens.FALSE, false); }
   "True"                      { return symbol(ChocoPyTokens.TRUE, true); }
   "nonlocal"                  { return symbol(ChocoPyTokens.NONLOCAL); }
-  "continue"                  { return symbol(ChocoPyTokens.CONTINUE); }
   "else"                        { return symbol(ChocoPyTokens.ELSE); }
   "return"                    { return symbol(ChocoPyTokens.RETURN); }
   "global"                    { return symbol(ChocoPyTokens.GLOBAL); }
   "global"                    { return symbol(ChocoPyTokens.GLOBAL); }
   "class"                     { return symbol(ChocoPyTokens.CLASS); }
-  "break"                     { return symbol(ChocoPyTokens.BREAK); }
   "while"                     { return symbol(ChocoPyTokens.WHILE); }
   "None"                      { return symbol(ChocoPyTokens.NONE); }
   "pass"                      { return symbol(ChocoPyTokens.PASS); }
@@ -151,23 +150,28 @@ IDString = \"{Identifier}\"
   "or"                        { return symbol(ChocoPyTokens.OR); }
 
   /* Literals. */
-  {IntegerLiteral}            { return symbol(ChocoPyTokens.INTEGER,
-                                                 Integer.parseInt(yytext())); }
+  {IntegerLiteral} {
+      try {
+          return symbol(ChocoPyTokens.INTEGER, Integer.parseInt(yytext()));
+      } catch (NumberFormatException ex) {
+          return symbol(ChocoPyTokens.UNRECOGNIZED, "<overflow integer>");
+      }
+  }
 
  /* Identifiers. */
  {Identifier}                { return symbol(ChocoPyTokens.IDENTIFIER, yytext()); }
-
- /* String */
- {String}                    { return stringsymbol(ChocoPyTokens.STRING, yytext().toString());}
-
- {IDString}                  { return symbol(ChocoPyTokens.IDSTRING, yytext());}
+ {IDString}                  { return symbol(ChocoPyTokens.IDSTRING, yytext()); }
+ {String}                    { return stringsymbol(ChocoPyTokens.STRING, yytext().toString()); }
+ {InvalidString}             { return symbol(ChocoPyTokens.UNRECOGNIZED, yytext());}
+ {Comment}                   { /* ignore */ }
 
   /* Operadores */
+  "//"                         { return symbol(ChocoPyTokens.DOUBLESLASH, yytext()); }
+  ">="                        { return symbol(ChocoPyTokens.GEQ    , yytext()); }
+  "<="                        { return symbol(ChocoPyTokens.LEQ    , yytext()); }
   "=="                        { return symbol(ChocoPyTokens.EQEQ  , yytext()); }
   ">"                         { return symbol(ChocoPyTokens.GT    , yytext()); }
-  ">="                        { return symbol(ChocoPyTokens.GEQ    , yytext()); }
   "<"                         { return symbol(ChocoPyTokens.LT    , yytext()); }
-  "<="                        { return symbol(ChocoPyTokens.LEQ    , yytext()); }
   "("                         { return symbol(ChocoPyTokens.LPAREN, yytext()); }
   ")"                         { return symbol(ChocoPyTokens.RPAREN, yytext()); }
   "["                         { return symbol(ChocoPyTokens.LINDEX, yytext()); }
@@ -175,14 +179,13 @@ IDString = \"{Identifier}\"
   ","                         { return symbol(ChocoPyTokens.COMMA , yytext()); }
   "."                         { return symbol(ChocoPyTokens.DOT   , yytext()); }
   "->"                        { return symbol(ChocoPyTokens.ARROW , yytext()); }
+  "*"                         { return symbol(ChocoPyTokens.TIMES, yytext()); }
   "-"                         { return symbol(ChocoPyTokens.MINUS, yytext()); }
   "+"                         { return symbol(ChocoPyTokens.PLUS, yytext()); }
   "%"                         { return symbol(ChocoPyTokens.MOD, yytext()); }
-  "//"                         { return symbol(ChocoPyTokens.DOUBLESLASH, yytext()); }
-  "*"                         { return symbol(ChocoPyTokens.TIMES, yytext()); }  
   ":"                         { return symbol(ChocoPyTokens.COLON); }
+  "!="                         { return symbol(ChocoPyTokens.NEQ); }
   "="                         { return symbol(ChocoPyTokens.EQ); }
-  "!="                         { return symbol(ChocoPyTokens.NEQ); }  
 
   /* Whitespace. */
   {WhiteSpace} {
@@ -192,12 +195,6 @@ IDString = \"{Identifier}\"
           yybegin(INDENTSTATE);
       }
   }
-
-  /* Comment. */
-  {Comment} { /* ignore */ }
-
-  /* Apóstrofo Simples */
-  \'                          { /* ignore */ }
 }
 
   <INDENTSTATE>{
