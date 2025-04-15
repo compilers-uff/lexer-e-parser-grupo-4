@@ -1,0 +1,35 @@
+{
+  "declarations" : [ ],
+  "statements" : [ {
+    "expr" : {
+      "value" : "Hello",
+      "kind" : "StringLiteral",
+      "location" : [ 2, 1, 2, 7 ]
+    },
+    "kind" : "ExprStmt",
+    "location" : [ 2, 1, 2, 7 ]
+  }, {
+    "expr" : {
+      "value" : "He\"ll\"o",
+      "kind" : "StringLiteral",
+      "location" : [ 3, 1, 3, 11 ]
+    },
+    "kind" : "ExprStmt",
+    "location" : [ 3, 1, 3, 11 ]
+  }, {
+    "expr" : {
+      "value" : "He\\\"llo",
+      "kind" : "StringLiteral",
+      "location" : [ 4, 1, 4, 11 ]
+    },
+    "kind" : "ExprStmt",
+    "location" : [ 4, 1, 4, 11 ]
+  } ],
+  "errors" : {
+    "errors" : [ ],
+    "kind" : "Errors",
+    "location" : [ 0, 0, 0, 0 ]
+  },
+  "kind" : "Program",
+  "location" : [ 2, 1, 4, 12 ]
+}

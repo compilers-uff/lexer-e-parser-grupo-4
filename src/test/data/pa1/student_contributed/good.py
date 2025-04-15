@@ -1,1 +1,4 @@
-1 + 2 + 3
+#String literal
+"Hello"
+"He\"ll\"o"
+"He\\\"llo"
