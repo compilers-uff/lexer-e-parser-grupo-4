@@ -175,7 +175,7 @@ action code {:
 /* Declaração de Terminais */
 terminal NEWLINE;
 terminal boolean TRUE, FALSE;
-terminal PASS, RETURN, BREAK, CONTINUE;
+terminal PASS, RETURN;
 terminal DEF;
 terminal CLASS;
 terminal IF, ELIF, ELSE, WHILE, FOR;
@@ -228,8 +228,6 @@ non terminal TypedVar          typed_var;
 non terminal VarDef            var_def;
 non terminal MemberExpr        member_expr;
 non terminal IndexExpr         index_expr;
-non terminal GlobalDecl        global_decl; 
-non terminal NonLocalDecl      nonlocal_decl;
 
 /* Declaração de não terminais relacionados a expressões e literais */
 non terminal Stmt              stmt, expr_stmt, assign_stmt, simple_stmt;
@@ -246,7 +244,7 @@ precedence left NOT;
 precedence nonassoc EQEQ, NEQ, LT, GT, LEQ, GEQ, IS;
 precedence left PLUS, MINUS;
 precedence left TIMES, DOUBLESLASH, MOD;
-precedence left DOT;
+precedence left DOT, LINDEX, RINDEX;
 
 /* The start symbol. */
 start with program;
@@ -301,8 +299,8 @@ program_head ::= {: RESULT = empty(); :}
                | program_head:h var_def:vd   {: RESULT = combine(h,vd); :}
                ;
 
-func_body ::= func_body:l func_body_decl:d {: RESULT = combine(l,d); :}
-                   |                {: RESULT = empty(); :}
+func_body ::= func_body:l func_body_decl:d  {: RESULT = combine(l,d); :}
+                   |                        {: RESULT = empty(); :}
                    ;
 
 func_body_decl ::= func_def:fd                {: RESULT = fd; :}
@@ -327,12 +325,15 @@ class_body ::= func_def:fd              {: RESULT = single(fd); :}
 
 func_def ::= DEF:d identifier:id LPAREN typed_var_list:tvl RPAREN ARROW type:t COLON NEWLINE INDENT func_body:opt stmt_list:sl DEDENT:de
                                   {: RESULT = new FuncDef(dxleft,getRight(sl),id,tvl,t,opt, sl); :}
+          | DEF:d identifier:id LPAREN typed_var_list:tvl RPAREN:rp COLON:c NEWLINE:nl INDENT func_body:dl stmt_list:sl DEDENT:de
+            {:
+                // Se a função não retornar nada, o tipo de retorno é None
+                ClassType renone = new ClassType(cxright,cxright,"<None>");
+
+                RESULT = new FuncDef(dxleft,getRight(sl),id,tvl,renone,dl,sl);
+            :}
           | DEF error DEDENT      {: RESULT = null; :}
           ;
-
-global_decl ::= GLOBAL identifier:id NEWLINE {: RESULT = new GlobalDecl(idxleft,idxright,id); :};
-
-nonlocal_decl ::= NONLOCAL identifier:id NEWLINE {: RESULT = new NonLocalDecl(idxleft,idxright,id); :};
 
 var_def ::= typed_var:tv EQ literal:l NEWLINE {: RESULT = new VarDef(tvxleft,lxright,tv,l); :}
           ;
