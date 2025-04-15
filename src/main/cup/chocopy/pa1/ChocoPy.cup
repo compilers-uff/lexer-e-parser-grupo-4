@@ -175,7 +175,7 @@ action code {:
 /* Declaração de Terminais */
 terminal NEWLINE;
 terminal boolean TRUE, FALSE;
-terminal PASS, RETURN;
+terminal PASS, RETURN, BREAK, CONTINUE;
 terminal DEF;
 terminal CLASS;
 terminal IF, ELIF, ELSE, WHILE, FOR;

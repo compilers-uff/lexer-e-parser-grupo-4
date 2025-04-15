@@ -129,24 +129,26 @@ IDString = \"{Identifier}\"
   /* Palavras Chave */
   "False"                     { return symbol(ChocoPyTokens.FALSE, false); }
   "True"                      { return symbol(ChocoPyTokens.TRUE, true); }
+  "nonlocal"                  { return symbol(ChocoPyTokens.NONLOCAL); }
+  "continue"                  { return symbol(ChocoPyTokens.CONTINUE); }
+  "else"                        { return symbol(ChocoPyTokens.ELSE); }
   "return"                    { return symbol(ChocoPyTokens.RETURN); }
   "global"                    { return symbol(ChocoPyTokens.GLOBAL); }
+  "global"                    { return symbol(ChocoPyTokens.GLOBAL); }
   "class"                     { return symbol(ChocoPyTokens.CLASS); }
+  "break"                     { return symbol(ChocoPyTokens.BREAK); }
   "while"                     { return symbol(ChocoPyTokens.WHILE); }
   "None"                      { return symbol(ChocoPyTokens.NONE); }
   "pass"                      { return symbol(ChocoPyTokens.PASS); }
   "elif"                      { return symbol(ChocoPyTokens.ELIF); }
+  "and"                       { return symbol(ChocoPyTokens.AND); }
   "def"                       { return symbol(ChocoPyTokens.DEF); }
   "not"                       { return symbol(ChocoPyTokens.NOT); }
   "for"                       { return symbol(ChocoPyTokens.FOR); }
   "if"                        { return symbol(ChocoPyTokens.IF); }
-  "else"                        { return symbol(ChocoPyTokens.ELSE); }
   "in"                        { return symbol(ChocoPyTokens.IN); }
   "is"                        { return symbol(ChocoPyTokens.IS); }
-  "or"                        { return symbol(ChocoPyTokens.OR); }  
-  "and"                       { return symbol(ChocoPyTokens.AND); }
-  "global"                    { return symbol(ChocoPyTokens.GLOBAL); }
-  "nonlocal"                  { return symbol(ChocoPyTokens.NONLOCAL); }  
+  "or"                        { return symbol(ChocoPyTokens.OR); }
 
   /* Literals. */
   {IntegerLiteral}            { return symbol(ChocoPyTokens.INTEGER,
@@ -199,54 +201,57 @@ IDString = \"{Identifier}\"
 }
 
   <INDENTSTATE>{
-    {WhiteSpace}+               {
-                                  // Calcula o nível de indentação com base nos espaços e tabulações.
-                                  // Substitui tabulações por múltiplos de 8 espaços para manter a consistência.
-                                  int col = 0;
-                                  for (int i = 0; i < yylength(); i++) {
-                                      if(yycharat(i)==' '){
-                                          col++;
-                                      }else{
-                                          col= (col==0) ? 8:((col+8)/8)*8;
-                                      }
-                                  }
-                                  if(addIndent(col)){
-                                     // Se o nível de indentação aumentou, retorna o token INDENT.
-                                     yybegin(YYINITIAL);
-                                     return symbol(ChocoPyTokens.INDENT);
-                                  }else{
-                                     if (rmIndent(col)){
-                                        // Se o nível de indentação diminuiu, retorna o token DEDENT.
-                                         if(this.indent < col){
-                                             return symbol(
-                                                      ChocoPyTokens.UNRECOGNIZED,
-                                                      "<bad indentation>");
-                                         }else{
-                                             yypushback(yylength());
-                                             return symbol(ChocoPyTokens.DEDENT);
-                                         }
-                                     } else{
-                                         // Caso contrário, retorna ao estado inicial.
-                                         yybegin(YYINITIAL);
-                                     }
-                                  }
-                                }
-    {WhiteSpace}*{LineBreak}    { /* ignore */ }
-    {WhiteSpace}*{Comment}      { /* ignore */ }
-    \S                          {
-                                  // Detecta caracteres não-espaço após uma quebra de linha.
-                                  // Retorna ao estado inicial e verifica se há necessidade de retornar DEDENT.
-                                  yypushback(1);
-                                  if(rmIndent(0)){
-                                      return symbol(ChocoPyTokens.DEDENT);
-                                  }else{
-                                      yybegin(YYINITIAL);
-                                  }
-                                }
+    {WhiteSpace}+ {
+      // Calcula a coluna atual com base nos espaços e tabulações.
+      int col = 0;
+      for (int i = 0; i < yylength(); i++) {
+        col += (yycharat(i) == ' ') ? 1 : 8 - (col % 8);
+      }
+
+      // Verifica se o nível de indentação aumentou.
+      if (addIndent(col)) {
+        yybegin(YYINITIAL);
+        return symbol(ChocoPyTokens.INDENT);
+      }
+      // Verifica se o nível de indentação diminuiu.
+      else if (rmIndent(col)) {
+        if (this.indent < col) {
+          return symbol(ChocoPyTokens.UNRECOGNIZED, "<bad indentation>");
+        }
+        yypushback(yylength());
+        return symbol(ChocoPyTokens.DEDENT);
+      }
+      // Retorna ao estado inicial se não houver mudança de indentação.
+      else {
+        yybegin(YYINITIAL);
+      }
+    }
+
+    // Ignora linhas em branco.
+    {WhiteSpace}*{LineBreak} { /* ignore */ }
+
+    // Ignora comentários.
+    {WhiteSpace}*{Comment} { /* ignore */ }
+
+    \S {
+      // Detecta caracteres não-espaço após uma quebra de linha.
+      yypushback(1);
+      if (rmIndent(0)) {
+        return symbol(ChocoPyTokens.DEDENT);
+      }
+      yybegin(YYINITIAL);
+    }
   }
 
 
-<<EOF>>                       { return symbol(ChocoPyTokens.EOF); }
+<<EOF>> {
+    if (rmIndent(0)) {
+        zzAtEOF = false;
+        return symbol(ChocoPyTokens.DEDENT);
+    } else {
+        return symbol(ChocoPyTokens.EOF);
+    }
+}
 
 /* Error fallback. */
 [^]                           { return symbol(ChocoPyTokens.UNRECOGNIZED); }
