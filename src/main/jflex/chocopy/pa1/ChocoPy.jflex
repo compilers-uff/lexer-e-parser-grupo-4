@@ -138,6 +138,7 @@ String = \"([^"\\"\"] | "\\t" | "\\n" | "\\\\" | "\\\"")+\"
   "not"                       { return symbol(ChocoPyTokens.NOT); }
   "for"                       { return symbol(ChocoPyTokens.FOR); }
   "if"                        { return symbol(ChocoPyTokens.IF); }
+  "else"                        { return symbol(ChocoPyTokens.ELSE); }
   "in"                        { return symbol(ChocoPyTokens.IN); }
   "is"                        { return symbol(ChocoPyTokens.IS); }
   "or"                        { return symbol(ChocoPyTokens.OR); }  
