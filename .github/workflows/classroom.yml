@@ -13,19 +13,19 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    - name: expr_plus
-      id: expr_plus
+    - name: expr
+      id: expr
       uses: classroom-resources/autograding-command-grader@v1
       with:
-        test-name: expr_plus
-        setup-command: ''
-        command: ' java -cp "chocopy-ref.jar:target/assignment.jar" chocopy.ChocoPy
-          --pass=s --test --dir src/test/data/pa1/sample/expr_plus.py'
+        test-name: expr
+        setup-command: mvn package
+        command: java -cp "chocopy-ref.jar:target/assignment.jar" chocopy.ChocoPy
+          --pass=s --test --dir src/test/data/pa1/sample/expr_plus.py
         timeout: 10
         max-score: 1
     - name: Autograding Reporter
       uses: classroom-resources/autograding-grading-reporter@v1
       env:
-        EXPR_PLUS_RESULTS: "${{steps.expr_plus.outputs.result}}"
+        EXPR_RESULTS: "${{steps.expr.outputs.result}}"
       with:
-        runners: expr_plus
+        runners: expr
