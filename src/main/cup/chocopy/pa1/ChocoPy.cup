@@ -330,6 +330,7 @@ func_body ::= func_body:fbd global_decl:gd             {: RESULT = combine(fbd, 
             | func_body:fbd nonlocal_decl:nld           {: RESULT = combine(fbd, nld); :}
             | func_body:fbd var_def:vd                  {: RESULT = combine(fbd, vd); :}
             | func_body:fbd func_def:fd                 {: RESULT = combine(fbd, fd); :}
+            |                                           {: RESULT = empty(); :}
             ;
 
 global_decl ::= GLOBAL identifier:id NEWLINE {: RESULT = new GlobalDecl(idxleft,idxright,id); :};
