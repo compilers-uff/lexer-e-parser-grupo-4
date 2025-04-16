@@ -1,53 +1,35 @@
-# CS 164: Programming Assignment 1
+# Submission writeup
 
-[PA1 Specification]: https://drive.google.com/open?id=1oYcJ5iv7Wt8oZNS1bEfswAklbMxDtwqB
-[ChocoPy Specification]: https://drive.google.com/file/d/1mrgrUFHMdcqhBYzXHG24VcIiSrymR6wt
+Membro 1: Thales Mendonça Moreira Pinto 
 
-Note: Users running Windows should replace the colon (`:`) with a semicolon (`;`) in the classpath argument for all command listed below.
+Membro 2: Daniel José de Macedo Santos
 
-## Getting started
+Membro 3: Caio Henrique Velloso Paranhos
 
-Run the following command to generate and compile your parser, and then run all the provided tests:
+## Agradecimentos
+Somos gratos ao autor desse arquivo https://piazza.com/class_profile/get_resource/i7dughpewipz/i8hpsi1fagk3sb que nos ajudou a compreender as mensagens de erro do cup, fundamentais para o desenvolvimento.
 
-    mvn clean package
+## Horas dedicadas
+Cerca de 22 horas totais foram dedicadas ao desevolvimento do projeto.
 
-    java -cp "chocopy-ref.jar:target/assignment.jar" chocopy.ChocoPy --pass=s --test --dir src/test/data/pa1/sample/
+## Estratégia de indentação
+Nós utilizamos uma Stack para guardar e manipular os valores de indentação, após cada linebreak o lexer vai para o estado INDENTSTATE e sempre que um caracter ou white-space não seguido de comment ou linebreak é indentificado é realizada uma contagem de indentação, em seguida esse valor é comparado com o ultimo valor guardado na Stack, se o valor for maior então um token INDENT é emitido, mas se o valor for menor então um token DEDENT é emitido, caso for igual o lexer apenas volta para o estado inicial. Ao final do programa (EOF) tokens DEDENT adicionais são emitidos até restar apenas o valor 0 na Stack.
 
-In the starter code, only one test should pass. Your objective is to build a parser that passes all the provided tests and meets the assignment specifications.
+A lógica da Stack pode ser encontrada em ChocoPy.jflex entre as linhas 77 e 97.
 
-To manually observe the output of your parser when run on a given input ChocoPy program, run the following command (replace the last argument to change the input file):
+O INDENTSTATE pode ser encontrado em ChocoPy.jflex entre as linhas 203 e 244.
 
-    java -cp "chocopy-ref.jar:target/assignment.jar" chocopy.ChocoPy --pass=s src/test/data/pa1/sample/expr_plus.py
+## NEWLINE/INDENT/DEDENT
+Tokens NEWLINE são emitidos somente se:
 
-You can check the output produced by the staff-provided reference implementation on the same input file, as follows:
+Caso 1: Não está na primeira linha do arquivo.
 
-    java -cp "chocopy-ref.jar:target/assignment.jar" chocopy.ChocoPy --pass=r src/test/data/pa1/sample/expr_plus.py
+Caso 2: Está na primeira linha do arquivo mas não é o primeiro caracter não white-space. 
 
-Try this with another input file as well, such as `src/test/data/pa1/sample/coverage.py`, to see what happens when the results disagree.
+## String Literals
 
-## Assignment specifications
+A implementação de Strings Literals foi um desafio particular pela falta de familiaridade com regex e pela necessidade de uma função para identificação dos caracteres de escape disponíveis do ChocoPy.
 
-See the [PA1 specification][] on the course
-website for a detailed specification of the assignment.
+A função está disponível em ChocoPy.jflex entre as linhas 41 e 74.
 
-Refer to the [ChocoPy Specification][] on the CS164 web site
-for the specification of the ChocoPy language. 
-
-## Receiving updates to this repository
-
-Add the `upstream` repository remotes (you only need to do this once in your local clone):
-
-    git remote add upstream https://github.com/cs164berkeley/pa1-chocopy-parser.git
-
-To sync with updates upstream:
-
-    git pull upstream master
-
-
-## Submission writeup
-
-Team member 1: 
-
-Team member 2: 
-
-(Students should edit this section with their write-up)
+O regex correspondente está em ChocoPy.jflex na linha 107.

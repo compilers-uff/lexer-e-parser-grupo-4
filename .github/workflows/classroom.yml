@@ -13,19 +13,19 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    - name: Lexer e parser
-      id: lexer-e-parser
+    - name: expr
+      id: expr
       uses: classroom-resources/autograding-command-grader@v1
       with:
-        test-name: Lexer e parser
-        setup-command: ''
+        test-name: expr
+        setup-command: mvn package
         command: java -cp "chocopy-ref.jar:target/assignment.jar" chocopy.ChocoPy
-          --pass=s --test --dir src/test/data/pa1/sample/
+          --pass=s --test --dir src/test/data/pa1/sample/expr_plus.py
         timeout: 10
-        max-score: 10
+        max-score: 1
     - name: Autograding Reporter
       uses: classroom-resources/autograding-grading-reporter@v1
       env:
-        LEXER-E-PARSER_RESULTS: "${{steps.lexer-e-parser.outputs.result}}"
+        EXPR_RESULTS: "${{steps.expr.outputs.result}}"
       with:
-        runners: lexer-e-parser
+        runners: expr
